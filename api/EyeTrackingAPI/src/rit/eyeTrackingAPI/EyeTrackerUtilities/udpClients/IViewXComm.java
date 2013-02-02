@@ -29,15 +29,15 @@ public class IViewXComm extends EyeTrackerClient
    // <editor-fold defaultstate="expanded" desc="Private Members">
 
 	private boolean stop = false;
-	private boolean toggleOn = true;
+	private final boolean toggleOn = true;
 	private InetAddress mTrackerServerCommandAddress = null;
    
    // Set up some members to handle the connection to the tracker, with defaults
    // (Should be able to change these before connecting, or between connections)
    private String mTrackerServerIP = "127.0.0.1";
-   private int mTrackerServerCommandPort = 6665;
-   private int mIncomingDataBindPort = 7777;
-   private int mDesiredDataRate = 60;
+   private final int mTrackerServerCommandPort = 6665;
+   private final int mIncomingDataBindPort = 7777;
+   private final int mDesiredDataRate = 60;
    
    // Two sockets, one to receive incoming data and one to send commands to the tracker
    private DatagramSocket mSendSocket;
@@ -79,14 +79,19 @@ public class IViewXComm extends EyeTrackerClient
    {
 		super(cursor);
 		
-		try {
+		try 
+      {
 			writer = new FileWriter(OUTPUT_PATH);
-		} catch (IOException e) {
-			e.printStackTrace();
+		} 
+      catch (IOException e) 
+      {
+         for (StackTraceElement ste : e.getStackTrace())
+         {
+            System.out.println(ste.toString());
+         }
 		}
 		
 		dataDump = new BufferedWriter(writer);
-	
 	}
 	
 	/**
@@ -98,19 +103,25 @@ public class IViewXComm extends EyeTrackerClient
 	 * @param ipAddress
 	 * 			  - the ipAddress as an array of bytes
 	 */
-	public IViewXComm(GazePoint cursor, String ipAddress) {
+	public IViewXComm(GazePoint cursor, String ipAddress) 
+   {
 		super(cursor);
 		
       mTrackerServerIP = ipAddress;
 		
-		try {
+		try 
+      {
 			writer = new FileWriter(OUTPUT_PATH);
-		} catch (IOException e) {
-			e.printStackTrace();
+		} 
+      catch (IOException e) 
+      {
+         for (StackTraceElement ste : e.getStackTrace())
+         {
+            System.out.println(ste.toString());
+         }
 		}
 		
 		dataDump = new BufferedWriter(writer);
-	
 	}
    
    // </editor-fold>
@@ -123,29 +134,33 @@ public class IViewXComm extends EyeTrackerClient
 	 * eye tracking device until the requestStop() method is called.
 	 */
 	@Override
-	public void run() {
+	public void run() 
+   {
 		clientOperation();
-
 	}
 
    @Override
-	public synchronized void disconnect(){
+	public synchronized void disconnect()
+   {
 		byte[] stopCommand = createIViewXCommandFromString(DISCONNECT_COMMAND);
-		try {
+		try 
+      {
 			mSendSocket.send(new DatagramPacket(stopCommand, stopCommand.length));
-		} catch (IOException e) {
+		} 
+      catch (IOException e) 
+      {
 			e.printStackTrace();
 		}
+      
 		//requestStop();
 		mSendSocket.close();
       mReceiveSocket.close();
 		connected = false;
-		
 	}
 	
    @Override
-	public synchronized void connect(){
-		
+	public synchronized void connect()
+   {
 		System.out.println("Initiating connection handshake ...");
 		
 		try 
@@ -158,18 +173,22 @@ public class IViewXComm extends EyeTrackerClient
          System.out.println(e.getStackTrace());
 		}
       
-		try{
-         
+		try
+      {   
          // Initialize both send and receive sockets
 			mReceiveSocket = new DatagramSocket(mIncomingDataBindPort);
          mSendSocket = new DatagramSocket();
          
 			connected = true;
 			System.out.println(connected);
-		}catch(BindException ex){
+		}
+      catch(BindException ex)
+      {
 			System.err.println("failed to create send/receive sockets, another program may be using them.");
 			connected = false;
-		} catch (SocketException e) {
+		} 
+      catch (SocketException e) 
+      {
 			e.printStackTrace();
 			connected = false;
 		}
@@ -200,11 +219,16 @@ public class IViewXComm extends EyeTrackerClient
 			msg = createIViewXCommandFromString(DATA_REQUEST_COMMAND);
 			mSendSocket.send(new DatagramPacket(msg, msg.length, mTrackerServerCommandAddress, mTrackerServerCommandPort));
 			
-		} catch (SocketException ex) {
-			if (ex.getClass().getName().equals("BindException")) {
+		} 
+      catch (SocketException ex) 
+      {
+			if (ex.getClass().getName().equals("BindException")) 
+         {
 				System.err.println("Not connected to an Eye Tracking device");
 			}
-		} catch (IOException e) {
+		} 
+      catch (IOException e) 
+      {
 			e.printStackTrace();
 		}
 	}
@@ -213,10 +237,14 @@ public class IViewXComm extends EyeTrackerClient
 	 * Toggles eye tracking on and off
 	 */
    @Override
-	public void toggle() {
-		if (connected) {
+	public void toggle() 
+   {
+		if (connected) 
+      {
 			disconnect();
-		} else {
+		} 
+      else 
+      {
 			connect();
 		}
 	}
@@ -225,30 +253,32 @@ public class IViewXComm extends EyeTrackerClient
 	 * A means of stopping this thread.
 	 */
    @Override
-	public void requestStop() {
+	public void requestStop() 
+   {
 		stop = true;
 		connected = false;
-		try {
+		try 
+      {
 			dataDump.close();
 			writer.close();
-		} catch (IOException e) {
+		} 
+      catch (IOException e) 
+      {
 			e.printStackTrace();
 		}
 	}
 	
-	public byte[] createIViewXCommandFromString(String command){
-		
+	public byte[] createIViewXCommandFromString(String command)
+   {	
 		char[] commandAsCharacters = command.toCharArray();
 		byte[] commandAsBytes = new byte[commandAsCharacters.length];
 		
-		for(int i = 0; i < commandAsCharacters.length; i++){
+		for(int i = 0; i < commandAsCharacters.length; i++)
+      {
 			commandAsBytes[i] = (byte) commandAsCharacters[i];
 		}
-		
-		//commandAsBytes[commandAsBytes.length-1] = '\n';
-		
+      
 		return commandAsBytes;
-		
 	}
 
 	@Override
@@ -260,87 +290,97 @@ public class IViewXComm extends EyeTrackerClient
 		}
 
 		String responseString = "";
-		
-		try {
-         
+		try 
+      {  
 			byte[] recvBuff = new byte[MAX_RESPONSE_SIZE_BYTES];
 			mUdpPacket = new DatagramPacket(recvBuff, recvBuff.length);
 			stop = false;
          
-			while ( !stop ) {
+			while ( !stop ) 
+         {	
+				if(connected)
+            {
+					if(responseString != null )
+               {
 				
-				if(connected){
-					if(responseString != null ){
-				
-					try{
-						if(mReceiveSocket!= null){
-							mReceiveSocket.receive(mUdpPacket);
-						}
-					
-						responseString = new String(mUdpPacket.getData(), 0, mUdpPacket.getLength()); // receive
-                                                                                                // file
-                                                                                                // contents
-		
-						if (responseString.contains(RESPONSE_DATA_STRING))
+                  try
                   {
-							//System.out.println("From eye tracker " + responseString);
-							String[] tokens = responseString.split(" ");
-						
-							if (toggleOn) 
+                     if(mReceiveSocket!= null)
                      {
-                        int screenX = 0;
-                        int screenY = 0;
-                        
-                        // Incoming data format should be as follows:
-                        //                           [ET]                     [TS]                           [SX]                                               [SY]
-                        //       "ET_SPL { (l)eft, (r)ight, (b)inocular } {timestamp} {X position of left eye} {X position of right eye} {Y position of left eye} {Y position of right eye}"
-                        //
-                        // So here we want to get a single X,Y screen location by averaging the two reported eye positions
-                        
-								try 
+                        mReceiveSocket.receive(mUdpPacket);
+                     }
+
+                     responseString = new String(mUdpPacket.getData(), 0, mUdpPacket.getLength()); // receive
+                                                                                                   // file
+                                                                                                   // contents
+                     if (responseString.contains(RESPONSE_DATA_STRING))
+                     {
+                        //System.out.println("From eye tracker " + responseString);
+                        String[] tokens = responseString.split(" ");
+
+                        if (toggleOn) 
                         {
-                           screenX = (Integer.parseInt(tokens[3].trim()) + Integer.parseInt(tokens[4].trim())) / 2;
-                           screenY = (Integer.parseInt(tokens[5].trim()) + Integer.parseInt(tokens[6].trim())) / 2;
-                           
-                           // Report a new gaze point to the "cursor" object assigned
-                           // to this listener
-                           cursor.setCoordinates(screenX, screenY);
-									
-								} 
-                        catch (NumberFormatException ex) 
-                        {                           
-                           screenX = (Integer.parseInt(tokens[2].trim()) + Integer.parseInt(tokens[3].trim())) / 2;
-                           screenY = (Integer.parseInt(tokens[4].trim()) + Integer.parseInt(tokens[5].trim())) / 2;
-									
-									// Report a new gaze point to the "cursor" object assigned
-                           // to this listener
-                           cursor.setCoordinates(screenX, screenY);									
-								} 
-                        catch(ArrayIndexOutOfBoundsException ex)
-                        {
-									System.err.println("out of bounds exception");
-								}
-							}
-						}
-					
-						}catch(SocketException ex){
-							//System.err.println("Disconnected");
-						}
-					
+                           int screenX = 0;
+                           int screenY = 0;
+
+                           // Incoming data format should be as follows:
+                           //                           [ET]                     [TS]                           [SX]                                               [SY]
+                           //       "ET_SPL { (l)eft, (r)ight, (b)inocular } {timestamp} {X position of left eye} {X position of right eye} {Y position of left eye} {Y position of right eye}"
+                           //
+                           // So here we want to get a single X,Y screen location by averaging the two reported eye positions
+
+                           try 
+                           {
+                              screenX = (Integer.parseInt(tokens[3].trim()) + Integer.parseInt(tokens[4].trim())) / 2;
+                              screenY = (Integer.parseInt(tokens[5].trim()) + Integer.parseInt(tokens[6].trim())) / 2;
+
+                              // Report a new gaze point to the "cursor" object assigned
+                              // to this listener
+                              cursor.setCoordinates(screenX, screenY);
+
+                           } 
+                           catch (NumberFormatException ex) 
+                           {                           
+                              screenX = (Integer.parseInt(tokens[2].trim()) + Integer.parseInt(tokens[3].trim())) / 2;
+                              screenY = (Integer.parseInt(tokens[4].trim()) + Integer.parseInt(tokens[5].trim())) / 2;
+
+                              // Report a new gaze point to the "cursor" object assigned
+                              // to this listener
+                              cursor.setCoordinates(screenX, screenY);									
+                           } 
+                           catch(ArrayIndexOutOfBoundsException ex)
+                           {
+                              System.err.println("out of bounds exception");
+                           }
+                        }
+                     }
+
+                  }
+                  catch(SocketException ex)
+                  {
+                        //System.err.println("Disconnected");
+                  }
 					}
 				}
 			}
 
-		} catch (IOException ex) {
+		} 
+      catch (IOException ex) 
+      {
 			System.err.println("I/O error");
 			ex.printStackTrace();
-		}catch(NullPointerException ex){
+		}
+      catch(NullPointerException ex)
+      {
 			ex.printStackTrace();
 		}
 		
-		try{
+		try
+      {
 			mReceiveSocket.close();
-		}catch(NullPointerException ex){
+		}
+      catch(NullPointerException ex)
+      {
 			ex.printStackTrace();
 		}
 	}
@@ -348,16 +388,12 @@ public class IViewXComm extends EyeTrackerClient
    // </editor-fold>
    
    // <editor-fold defaultstate="expanded" desc="Public Properties">
-
-/*	public boolean isOn() {
-		return toggleOn;
-	}*/
 	
    @Override
-	public synchronized boolean isConnected() {
+	public synchronized boolean isConnected() 
+   {
 		return connected;
 	}
    
    // </editor-fold>
-
 }
