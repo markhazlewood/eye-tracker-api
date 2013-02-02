@@ -10,8 +10,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import rit.eyeTrackingAPI.DataConstructs.GazePoint;
 
-public class ITUGazeTrackerComm extends EyeTrackerClient{
-
+public class ITUGazeTrackerComm extends EyeTrackerClient
+{
 	private DatagramSocket ds;
 	private DatagramPacket dp;
 	private boolean stop = false;
@@ -20,44 +20,48 @@ public class ITUGazeTrackerComm extends EyeTrackerClient{
 	private InetAddress ituGT;
 	
 	
-	public ITUGazeTrackerComm(GazePoint cursor) {
+	public ITUGazeTrackerComm(GazePoint cursor) 
+   {
 		super(cursor);
 	}
 
 	@Override
-	protected void clientOperation() {
-		// TODO Auto-generated method stub
-		if(!connected){
+	protected void clientOperation() 
+   {
+		if(!connected)
+      {
 			connect();
 		}
 		
-		while(!stop){
-			
+		while(!stop)
+      {	
 			String gtString = null;
 			
-			try {
+			try 
+         {
 				ds.receive(dp);
 				gtString = new String(dp.getData(),0,dp.getLength());
-			} catch (IOException e) {
+			}
+         catch (IOException e) 
+         {
 				e.printStackTrace();
 			}
 			
-			//System.out.println("from gt " + gtString);
-			if(gtString != null){
+			if(gtString != null)
+         {
 				String[] tokens = gtString.split(" ");
 				
-				if(toggleOn){
-					
+				if(toggleOn)
+            {
 					cursor.setCoordinates( (int)Double.parseDouble(tokens[2]), (int)Double.parseDouble(tokens[3]) );
 				}
-				
 			}
-			
 		}
-		
 	}
 	
-	public void connect(){
+   @Override
+	public void connect()
+   {
 		byte[] b = new byte[50];
 		byte[] address = new byte[4];
 		address[0] = new Integer(127).byteValue();
@@ -67,48 +71,66 @@ public class ITUGazeTrackerComm extends EyeTrackerClient{
 		
 		dp = new DatagramPacket(b,b.length);
 		
-		try {
+		try
+      {
 			ituGT = InetAddress.getByAddress(address);
-		} catch (UnknownHostException e) {
+		}
+      catch (UnknownHostException e) 
+      {
 			System.err.println("Cannot find iViewX system");
-			e.printStackTrace();
+         for (StackTraceElement ste : e.getStackTrace())
+         {
+            System.out.println(ste.toString());
+         }
 		}
 		
 		//ds = new DatagramSocket(7777);
-		try{
+		try
+      {
 			ds = new DatagramSocket(6666);
-		}catch(BindException ex){
+		}
+      catch(BindException ex)
+      {
 			System.err.println("failed to connect to socket, another program may be using it.");
-		} catch (SocketException e) {
-			e.printStackTrace();
+		} 
+      catch (SocketException e) 
+      {
+         for (StackTraceElement ste : e.getStackTrace())
+         {
+            System.out.println(ste.toString());
+         }
 		}
 	}
 
 	@Override
-	public void disconnect() {
+	public void disconnect() 
+   {
 		ds.close();
 		connected = false;
-		
 	}
 
 	@Override
-	public boolean isConnected() {
+	public boolean isConnected() 
+   {
 		return connected;
 	}
 
 	@Override
-	public void requestStop() {
+	public void requestStop() 
+   {
 		stop = true;
 	}
 
 	@Override
-	public void toggle() {
-		// TODO Auto-generated method stub
-		if (connected) {
+	public void toggle() 
+   {
+		if (connected) 
+      {
 			disconnect();
-		} else {
+		} 
+      else 
+      {
 			connect();
 		}
-	}
-
+   }
 }
