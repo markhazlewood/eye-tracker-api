@@ -61,6 +61,7 @@ public class IViewXComm extends EyeTrackerClient
    private final String RESPONSE_DATA_STRING = "ET_SPL";
 
    // </editor-fold>
+   
    // <editor-fold defaultstate="expanded" desc="Constructor(s)">
    /**
     * Constructor for the IViewXComm class. Sets the cursor object associated
