@@ -4,9 +4,10 @@ import javax.swing.JFrame;
 
 public class MyEyeTrackingAppUI extends JFrame
 {
-	public MyEyeTrackingAppUI()
+
+   public MyEyeTrackingAppUI()
    {
-		//construct ui here
-	}
-	
+      //construct ui here
+   }
+
 }
