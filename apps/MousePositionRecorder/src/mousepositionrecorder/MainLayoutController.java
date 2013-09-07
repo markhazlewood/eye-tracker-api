@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package mousepositionrecorder;
 
 import java.awt.MouseInfo;
@@ -21,60 +20,84 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
 /**
- * 
+ *
  * @author mhazlewood
  */
-public class MainLayoutController implements Initializable 
+public class MainLayoutController implements Initializable
 {
    @FXML
    Button recordButton;
-   
+
    @FXML
    Label formLabel;
-   
+
    private boolean mRecording = false;
    private Timer mCountdownTimer;
    private Timer mDotTimer;
-   
+
    private Thread mMousePollThread;
    private MousePollTask mMousePollTask;
-   
-   
+
    @Override
-   public void initialize(URL url, ResourceBundle rb) 
+   public void initialize(URL url, ResourceBundle rb)
    {
-       mRecording = false;
-       formLabel.setText("");
+      mRecording = false;
+      formLabel.setText("");
    }
    
-   @FXML
-   public void handleRecordButtonClick(ActionEvent event)
+   public void shutdown()
    {
-      if (mRecording == true)
+      killThreads();
+   }
+   
+   public void killThreads()
+   {
+      if (mMousePollTask != null)
       {
-         mRecording = false;         
-         recordButton.setId("recordButton");         
-         
          mMousePollTask.cancel();
          mMousePollTask = null;
+      }
+      
+      if (mMousePollThread != null)
+      {
          mMousePollThread = null;
-         
+      }
+
+      if (mDotTimer != null)
+      {
          mDotTimer.cancel();
          mDotTimer.purge();
          mDotTimer = null;
-         
+      }
+
+      if (mCountdownTimer != null)
+      {
          mCountdownTimer.cancel();
          mCountdownTimer.purge();
          mCountdownTimer = null;
-         
+      }
+   }
+
+   @FXML
+   public void handleRecordButtonClick(ActionEvent event)
+   {
+      // Avoid double clicking before stuff happens
+      recordButton.setDisable(true);
+      
+      if (mRecording == true)
+      {
+         mRecording = false;
+         recordButton.setId("recordButton");
+
+         killThreads();
+
          formLabel.setText("Awaiting orders");
+         recordButton.setDisable(false);
       }
       else
-      {         
-         recordButton.setId("recordButton-recording");         
-         
+      {
          formLabel.setText("3 ");
-         
+
          mDotTimer = new Timer();
          mDotTimer.scheduleAtFixedRate(new TimerTask()
          {
@@ -85,7 +108,7 @@ public class MainLayoutController implements Initializable
                {
                   @Override
                   public void run()
-                  {  
+                  {
                      if (mRecording == true && formLabel.getText().equals("Recording..."))
                      {
                         formLabel.setText("Recording");
@@ -98,7 +121,7 @@ public class MainLayoutController implements Initializable
                });
             }
          }, 500, 500);
-         
+
          mCountdownTimer = new Timer();
          mCountdownTimer.schedule(new TimerTask()
          {
@@ -112,11 +135,11 @@ public class MainLayoutController implements Initializable
                   {
                      formLabel.setText(formLabel.getText() + " 2 ");
                   }
-               });               
+               });
             }
-            
+
          }, 1500);
-         
+
          mCountdownTimer.schedule(new TimerTask()
          {
             @Override
@@ -130,11 +153,11 @@ public class MainLayoutController implements Initializable
                   {
                      formLabel.setText(formLabel.getText() + " 1 ");
                   }
-               });    
+               });
             }
-            
+
          }, 3000);
-         
+
          mCountdownTimer.schedule(new TimerTask()
          {
             @Override
@@ -147,21 +170,23 @@ public class MainLayoutController implements Initializable
                   {
                      formLabel.setText("Recording");
                      mRecording = true;
-                     
+
                      mMousePollTask = new MousePollTask();
                      mMousePollThread = new Thread(mMousePollTask);
-                     mMousePollThread.start();
+                     mMousePollThread.start();                     
+                     
+                     recordButton.setDisable(false);
+                     recordButton.setId("recordButton-recording");
                   }
-               });    
+               });
             }
-            
+
          }, 4500);
-         
+
          //TODO: Update label(s) to show current position and number of recorded points
       }
-   }   
-   
-   
+   }
+
    private class MousePollTask extends Task<Object>
    {
       @Override
