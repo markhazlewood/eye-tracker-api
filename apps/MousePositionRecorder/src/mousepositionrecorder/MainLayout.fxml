@@ -9,15 +9,15 @@
 <?import javafx.scene.layout.*?>
 
 <FlowPane fx:id="rootPane" hgap="10.0" minHeight="67.9998779296875" prefHeight="84.0" prefWidth="300.0" style="-fx-background-color: &#10;        #090a0c,&#10;        linear-gradient(#38424b 0%, #1f2429 20%, #191d22 100%),&#10;        linear-gradient(#20262b, #191d22),&#10;        radial-gradient(center 10% 0%, radius 100%, rgba(114,131,148,0.9), rgba(255,255,255,0));&#10;    -fx-background-insets: 0,1,2,0;" styleClass="root" vgap="10.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="mousepositionrecorder.MainLayoutController">
-  <children>
-    <Button fx:id="recordButton" mnemonicParsing="false" onAction="#handleRecordButtonClick" prefHeight="64.0" prefWidth="64.0" text="">
-      <stylesheets>
-        <URL value="@MainLayoutStyle.css" />
-      </stylesheets>
-    </Button>
-    <Label fx:id="formLabel" style="-fx-text-fill: white;&#10;-fx-font-weight: bold;&#10;-fx-font-size: 18pt;&#10;" text="Awaiting orders" />
-  </children>
-  <padding>
-    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-  </padding>
+   <children>
+      <Button fx:id="recordButton" mnemonicParsing="false" onAction="#handleRecordButtonClick" prefHeight="64.0" prefWidth="64.0" text="">
+         <stylesheets>
+            <URL value="@MainLayoutStyle.css" />
+         </stylesheets>
+      </Button>
+      <Label fx:id="formLabel" style="-fx-text-fill: white;&#10;-fx-font-weight: bold;&#10;-fx-font-size: 18pt;&#10;" text="Awaiting orders" />
+   </children>
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
 </FlowPane>
