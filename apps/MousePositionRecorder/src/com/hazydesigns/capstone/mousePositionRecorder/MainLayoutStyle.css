@@ -1,0 +1,61 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : Sep 6, 2013, 1:52:49 PM
+    Author     : mhazlewood
+*/
+
+.root
+{
+   -fx-background-color: transparent;
+}
+
+.label
+{
+   -fx-text-fill: white;
+   -fx-font-weight: bold;
+   -fx-font-size: 18pt;
+   -fx-effect: dropshadow( gaussian , rgba(255,255,255,0.75) , 0,0,0,1 );
+}
+
+#recordButton
+{   
+
+   -fx-background-color: darkslategray, linear-gradient(#ff5400, #be1d00);
+   -fx-background-insets: 0, 2;
+   -fx-border-style: none;
+   -fx-background-radius: 128, 128, 128, 128;
+}
+
+#recordButton:hover
+{
+   -fx-background-color: darkslategray, linear-gradient(#be1d00, #ff5400);
+   -fx-cursor: hand;
+}
+
+#recordButton-recording
+{   
+   -fx-background-color: 
+      darkslategray,
+      linear-gradient(#7ebcea, #2f4b8f),
+      linear-gradient(#426ab7, #263e75),
+      linear-gradient(#395cab, #223768);
+
+   -fx-background-insets: 0, 1, 2, 3;
+   -fx-border-style: none;
+   -fx-background-radius: 10, 10, 10, 10;
+   margin: 10px;
+}
+
+#recordButton-recording:hover
+{
+   -fx-background-color: 
+      #000000,
+      linear-gradient(#2f4b8f, #7ebcea),
+      linear-gradient(#263e75, #426ab7),
+      linear-gradient(#395cab, #223768);
+   -fx-cursor: hand;
+}
