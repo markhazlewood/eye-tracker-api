@@ -7,7 +7,13 @@ package mousepositionrecorder;
 
 import java.awt.MouseInfo;
 import java.awt.Point;
+import java.io.BufferedWriter;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -37,12 +43,16 @@ public class MainLayoutController implements Initializable
 
    private Thread mMousePollThread;
    private MousePollTask mMousePollTask;
+   
+   private ArrayList<String> mTextLines;
+   
+   private static final String TEST_FILE_PATH = System.getProperty("java.io.tmpdir") + "\\simulatedEyeData.txt";
 
    @Override
    public void initialize(URL url, ResourceBundle rb)
    {
-      mRecording = false;
-      formLabel.setText("");
+      mRecording = false;      
+      mTextLines = new ArrayList<>();
    }
    
    public void shutdown()
@@ -93,6 +103,34 @@ public class MainLayoutController implements Initializable
 
          formLabel.setText("Awaiting orders");
          recordButton.setDisable(false);
+         
+         if (mTextLines.size() > 0)
+         {
+            try
+            {
+               Thread.sleep(500);
+            }
+            catch (InterruptedException ex)
+            {
+               ex.printStackTrace();
+            }
+
+            Path filePath = Paths.get(TEST_FILE_PATH);
+            try (BufferedWriter writer = Files.newBufferedWriter(filePath, StandardCharsets.UTF_8))
+            {
+               for (String line : mTextLines)
+               {
+                  writer.write(line);
+                  writer.newLine();
+               }
+               mTextLines.clear();
+            }
+            catch (Exception ex)
+            {
+               ex.printStackTrace();
+            }
+         }
+         
       }
       else
       {
@@ -198,11 +236,17 @@ public class MainLayoutController implements Initializable
             {
                break;
             }
-
+            
             Point p = MouseInfo.getPointerInfo().getLocation();
-            System.out.println(p.x + ", " + p.y);
+            String line = p.x + "," + p.y + ",100";
+            mTextLines.add(line);
+            
+            if (mTextLines.size() % 10 == 0)
+            {
+               System.out.println(line);
+            }            
 
-            Thread.sleep(500);
+            Thread.sleep(100);
          }
 
          return null;
