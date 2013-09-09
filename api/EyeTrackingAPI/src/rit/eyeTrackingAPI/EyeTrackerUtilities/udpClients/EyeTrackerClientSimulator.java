@@ -7,6 +7,11 @@
 package rit.eyeTrackingAPI.EyeTrackerUtilities.udpClients;
 
 import java.awt.Point;
+import java.io.BufferedReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import rit.eyeTrackingAPI.DataConstructs.GazePoint;
@@ -20,28 +25,30 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
    // <editor-fold defaultstate="expanded" desc="Constructor(s)">
    
    private ArrayList<SimulatedGazePoint> mInterpolatedGazePoints = 
-           new ArrayList<SimulatedGazePoint>();
+           new ArrayList<>();
    private boolean mActive = false;
    private short mTimeOnPoints_milliseconds = 0;
    
-   private final boolean mInterpolate = false;
+   private boolean mInterpolate = false;
    
    /**
     * Constructor
     * @param cursor 
     * @param timeOnPoints 
+    * @param interpolate 
     */
-   public EyeTrackerClientSimulator(GazePoint cursor, short timeOnPoints)
+   public EyeTrackerClientSimulator(GazePoint cursor, short timeOnPoints, boolean interpolate)
    {
       super(cursor);
       this.setName("Eye Tracker Simulator");
       
       this.mTimeOnPoints_milliseconds = timeOnPoints;
+      this.mInterpolate = interpolate;
    }
    
-   public EyeTrackerClientSimulator(GazePoint cursor, ArrayList<SimulatedGazePoint> gazePath, short timeOnPoints)
+   public EyeTrackerClientSimulator(GazePoint cursor, ArrayList<SimulatedGazePoint> gazePath, short timeOnPoints, boolean interpolate)
    {
-      this(cursor, timeOnPoints);
+      this(cursor, timeOnPoints, interpolate);
       
       if (this.mInterpolate == true)
       {
@@ -54,13 +61,48 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
       }
    }
    
-   public EyeTrackerClientSimulator(GazePoint cursor, String gazePathFilePath, short timeOnPoints)
+   public EyeTrackerClientSimulator(GazePoint cursor, String gazePathFilePath, short timeOnPoints, boolean interpolate)
    {
-      this(cursor, timeOnPoints);
+      this(cursor, timeOnPoints, interpolate);
       
       // TODO: Load gaze path from file
+      ArrayList<SimulatedGazePoint> gazePath = new ArrayList<>();
+      Path filePath = Paths.get(gazePathFilePath);
       
-      // TODO: Build interpolated gaze position list
+      try(BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8))
+      {
+         String line;
+         String[] values;
+         int x, y;
+         short timeOnPoint;
+         
+         while ((line = reader.readLine()) != null)
+         {
+            values = line.split(",");
+            x = Integer.parseInt(values[0].trim());
+            y = Integer.parseInt(values[1].trim());
+            timeOnPoint = Short.parseShort(values[2].trim());
+            
+            gazePath.add(new SimulatedGazePoint(new Point(x, y), timeOnPoint));
+         }         
+      }
+      catch (Exception ex)
+      {
+         ex.printStackTrace();
+      }      
+      
+      if (gazePath.size() > 0)
+      {
+         if (this.mInterpolate == true)
+         {
+            // Build interpolated gaze position list      
+            mInterpolatedGazePoints = interpolatePoints(gazePath);
+         }
+         else
+         {
+            mInterpolatedGazePoints = gazePath;
+         }
+      }
    }
 
    // </editor-fold>
@@ -96,8 +138,7 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
     */
    private ArrayList<SimulatedGazePoint> interpolatePoints(List<SimulatedGazePoint> rawPoints)
    {
-      ArrayList<SimulatedGazePoint> interpolatedList = 
-              new ArrayList<SimulatedGazePoint>();
+      ArrayList<SimulatedGazePoint> interpolatedList = new ArrayList<>();
       
       // TODO: Fill in interpolatedList with points that follow rawPoints at 
       //          an interval matching mTimeOnPoints.
