@@ -15,7 +15,7 @@ public abstract class EyeTrackerClient extends Thread
    /**
     * Represents the current sample point from the eye tracker.
     */
-   protected GazePoint cursor;
+   protected GazePoint mGazePointContainer;
 
    /**
     * A flag for whether or not this client object is connected to the port the
@@ -27,11 +27,11 @@ public abstract class EyeTrackerClient extends Thread
    /**
     * Creates a new eye Tracker client with a reference to a GazePoint object
     *
-    * @param cursor
+    * @param gazePoint
     */
-   public EyeTrackerClient(GazePoint cursor)
+   public EyeTrackerClient(GazePoint gazePoint)
    {
-      this.cursor = cursor;
+      this.mGazePointContainer = gazePoint;
       this.setName("Comm Thread");
    }
 

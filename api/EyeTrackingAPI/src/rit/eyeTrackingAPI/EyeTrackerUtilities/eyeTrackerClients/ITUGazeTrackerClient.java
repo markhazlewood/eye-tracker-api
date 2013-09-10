@@ -52,7 +52,7 @@ public class ITUGazeTrackerClient extends EyeTrackerClient
 
             if (toggleOn)
             {
-               cursor.setCoordinates((int) Double.parseDouble(tokens[2]), (int) Double.parseDouble(tokens[3]));
+               mGazePointContainer.setCoordinates((int) Double.parseDouble(tokens[2]), (int) Double.parseDouble(tokens[3]));
             }
          }
       }
