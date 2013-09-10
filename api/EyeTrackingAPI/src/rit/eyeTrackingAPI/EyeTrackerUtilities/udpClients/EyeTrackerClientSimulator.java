@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import rit.eyeTrackingAPI.DataConstructs.GazePoint;
 
@@ -24,9 +25,9 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
 {
    // <editor-fold defaultstate="expanded" desc="Constructor(s)">
    
-   private ArrayList<SimulatedGazePoint> mInterpolatedGazePoints = 
-           new ArrayList<>();
-   private boolean mActive = false;
+   private ArrayList<SimulatedGazePoint> mOriginalGazePoints;
+   private ArrayList<SimulatedGazePoint> mInterpolatedGazePoints;
+   private boolean mActive = true;
    private short mTimeOnPoints_milliseconds = 0;
    
    private boolean mInterpolate = false;
@@ -50,14 +51,16 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
    {
       this(cursor, timeOnPoints, interpolate);
       
+      mOriginalGazePoints = ((ArrayList<SimulatedGazePoint>)gazePath.clone());
+      
       if (this.mInterpolate == true)
       {
-         // Build interpolated gaze position list      
-         mInterpolatedGazePoints = interpolatePoints(gazePath);
+         // Build interpolated gaze position list
+         mInterpolatedGazePoints = interpolatePoints(mOriginalGazePoints);
       }
       else
       {
-         mInterpolatedGazePoints = gazePath;
+         mInterpolatedGazePoints = ((ArrayList<SimulatedGazePoint>)mOriginalGazePoints.clone());
       }
    }
    
@@ -65,8 +68,7 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
    {
       this(cursor, timeOnPoints, interpolate);
       
-      // TODO: Load gaze path from file
-      ArrayList<SimulatedGazePoint> gazePath = new ArrayList<>();
+      mOriginalGazePoints = new ArrayList<>();
       Path filePath = Paths.get(gazePathFilePath);
       
       try(BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8))
@@ -83,7 +85,7 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
             y = Integer.parseInt(values[1].trim());
             timeOnPoint = Short.parseShort(values[2].trim());
             
-            gazePath.add(new SimulatedGazePoint(new Point(x, y), timeOnPoint));
+            mOriginalGazePoints.add(new SimulatedGazePoint(new Point(x, y), timeOnPoint));
          }         
       }
       catch (Exception ex)
@@ -91,16 +93,16 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
          ex.printStackTrace();
       }      
       
-      if (gazePath.size() > 0)
+      if (mOriginalGazePoints.size() > 0)
       {
          if (this.mInterpolate == true)
          {
             // Build interpolated gaze position list      
-            mInterpolatedGazePoints = interpolatePoints(gazePath);
+            mInterpolatedGazePoints = interpolatePoints(mOriginalGazePoints);
          }
          else
          {
-            mInterpolatedGazePoints = gazePath;
+            mInterpolatedGazePoints = ((ArrayList<SimulatedGazePoint>)mOriginalGazePoints.clone());
          }
       }
    }
@@ -146,6 +148,27 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
       
       return interpolatedList;
    }
+   
+   public void setJitter(int jitterValue)
+   {
+      try
+      {
+         mInterpolatedGazePoints.clear();
+      }
+      catch (Exception ex)
+      {
+         ex.printStackTrace();
+      }
+      
+      for (SimulatedGazePoint point : mOriginalGazePoints)
+      {
+         int x = point.getPoint().x + (int)((Math.random() * jitterValue) - (jitterValue/2.0));
+         int y = point.getPoint().y + (int)((Math.random() * jitterValue) - (jitterValue/2.0));
+         
+         SimulatedGazePoint newPoint = new SimulatedGazePoint(new Point(x, y), point.getTimeOnPoint_milliseconds());
+         mInterpolatedGazePoints.add(newPoint);
+      }
+   }
 
    @Override
    protected void clientOperation()
@@ -153,7 +176,7 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
       SimulatedGazePoint currentPoint;
       int pointIndex = 0;
       
-      while (mActive == true)
+      while (mActive == true && pointIndex < mInterpolatedGazePoints.size())
       {     
          if (mInterpolatedGazePoints.size() > 0)
          {         
