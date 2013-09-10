@@ -20,10 +20,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import rit.eyeTrackingAPI.ApplicationUtilities.EyeTrackingMediator;
+import rit.eyeTrackingAPI.ApplicationUtilities.EyeTrackingFilterListener;
 import rit.eyeTrackingAPI.DataConstructs.GazePoint;
-import rit.eyeTrackingAPI.EyeTrackerUtilities.udpClients.EyeTrackerClient;
-import rit.eyeTrackingAPI.EyeTrackerUtilities.udpClients.EyeTrackerClientSimulator;
+import rit.eyeTrackingAPI.EyeTrackerUtilities.eyeTrackerClients.EyeTrackerClient;
+import rit.eyeTrackingAPI.EyeTrackerUtilities.eyeTrackerClients.EyeTrackerClientSimulator;
 import rit.eyeTrackingAPI.SmoothingFilters.Filter;
 import rit.eyeTrackingAPI.SmoothingFilters.PassthroughFilter;
 import sun.security.util.SecurityConstants;
@@ -41,7 +41,7 @@ public class MainFrame extends JFrame
    private GazePoint mGazePoint;
    private Filter mSmoothingFilter;
    private EyeTrackerClient mEyeTrackerClient;
-   private EyeTrackingMediator mEyeTrackerListener;
+   private EyeTrackingFilterListener mEyeTrackerListener;
    
    
    private static final String TEST_FILE_PATH = System.getProperty("java.io.tmpdir") + "\\simulatedEyeData.txt";
@@ -202,7 +202,7 @@ public class MainFrame extends JFrame
    // End of variables declaration//GEN-END:variables
 
    
-   private class EyeTrackerListener extends EyeTrackingMediator
+   private class EyeTrackerListener extends EyeTrackingFilterListener
    {
       Robot mRobot;
       
@@ -228,7 +228,7 @@ public class MainFrame extends JFrame
        * @param newUserGazePoint, the new gaze point
        */
       @Override
-      protected void display(Point newUserGazePoint)
+      protected void newPoint(Point newUserGazePoint)
       {
          mRobot.mouseMove(newUserGazePoint.x, newUserGazePoint.y);
          System.out.println(newUserGazePoint);
