@@ -8,46 +8,35 @@ import java.awt.event.ActionListener;
 
 import rit.eyeTrackingAPI.SmoothingFilters.Filter;
 
-
-/*import rit.hbir.multitouch.*;
- import rit.hbir.multitouch.scenes.ImageScene;
-
- import org.mt4j.MTApplication;
- import org.mt4j.components.MTCanvas;
- import org.mt4j.components.MTComponent;
- import org.mt4j.components.TransformSpace;
- import org.mt4j.sceneManagement.IPreDrawAction;
- import org.mt4j.util.math.Vector3D;
-
- import rit.hbir.control.eventHandling.CBIRActionListener;
- import rit.hbir.graphics.filter.Filter;*/
 /**
- * A graphics rendering thread class. Handles performing operations based on
- * data coming from the eye tracker.
+ * A thread-based class that continuously polls a {@link Filter} for its latest
+ * filtered gaze point on a dedicated thread. When a new filtered point is 
+ * discovered the {@link #newPoint(Point)} method is called.
  *
- * @author cde7825
+ * @author Corey Engelman
+ * 
+ * @see Filter
+ * @see #newPoint(Point)
  *
  */
-public abstract class EyeTrackingMediator
+public abstract class EyeTrackingFilterListener
 {
-
-   //protected volatile ArrayList drawables = new ArrayList();
-   protected Runnable runnable;
-   protected Thread thread;
-   protected boolean cursorVisible = true;
-   protected int screenWidth;
-   protected GraphicsDevice[] displays;
-   protected int stimulusDisplay = 1;
+   protected Thread mPollingThread;
+   
+   protected boolean mCursorVisible = true;
+   protected int mScreenWidth;
+   protected GraphicsDevice[] mDisplayDevices;
+   protected int mActiveScreenIndex = 1;
    protected Point canvasPoint;
    protected int canvasWidth;
    protected int canvasHeight;
-   protected final Filter filter;
+   protected final Filter mFilter;
    protected Point pointOnCanvas;
    protected boolean shouldStop;
-   protected boolean paintingFixations = false;
+   protected boolean mDrawGazePoints = false;
    protected boolean printExceptions = true;
    protected boolean ignoreExceptions = true;
-   protected ActionListener listener;
+   protected ActionListener mActionListener;
    protected Boolean eyeTracking = false;
    protected boolean testMode = false;
 
@@ -56,26 +45,32 @@ public abstract class EyeTrackingMediator
     * handling its events, and a boolean that says whether or not to paint
     * fixations.
     *
-    * @param mtApp
-    * @param filter
-    * @param actionListener
-    * @param paintingFixations
-    * @param display - the display being used
+    * @param filter The filter of interest, where new points will continuously 
+    * be polled.
+    * @param actionListener A listener to notify when a new point is available. 
+    * Can be null if desired. Implementing classes should check to see if this
+    * member is set and call actions on it appropriately from the {@link #newPoint(Point)}
+    * method.
+    * @param drawGazePoints If true, gaze points identified by this listener
+    * will be drawn to the screen.
+    * @param screenIndex Zero-based index of the screen being used. Default is 0.
     */
-   public EyeTrackingMediator(Filter filter, ActionListener actionListener, boolean paintingFixations, int display)
+   public EyeTrackingFilterListener(Filter filter, 
+                                    ActionListener actionListener,
+                                    boolean drawGazePoints,
+                                    int screenIndex)
    {
-      this.listener = actionListener;
-      this.filter = filter;
-      this.paintingFixations = paintingFixations;
-      this.stimulusDisplay = display;
+      mActionListener = actionListener;
+      mFilter = filter;
+      mDrawGazePoints = drawGazePoints;
+      mActiveScreenIndex = screenIndex;
 
-      GraphicsEnvironment ge = GraphicsEnvironment
-              .getLocalGraphicsEnvironment();
-      GraphicsDevice[] displays = ge.getScreenDevices();
-      GraphicsConfiguration displayConf = displays[stimulusDisplay]
-              .getDefaultConfiguration();
+      GraphicsDevice[] screenDevices = 
+              GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();      
+      GraphicsConfiguration displayConf = 
+              screenDevices[mActiveScreenIndex].getDefaultConfiguration();
 
-      screenWidth = displayConf.getBounds().width;
+      mScreenWidth = displayConf.getBounds().width;
 
    }
 
@@ -85,27 +80,22 @@ public abstract class EyeTrackingMediator
     */
    protected abstract void updateCursorCoordinates();
 
-   /*
-    * A function for determining if the cursor position is actually on the
+   /**
+    * A function for determining if a given x, y position is actually on the
     * canvas.
     * 
-    * @param horizontalClipping - horizontal maximum
+    * @param x The X position to test.
+    * @param y The Y position to test.
     * 
-    * @param verticalClipping - vertical maximum
-    * 
-    * @return true/false
+    * @return True if the x, y position is on the canvas, otherwise false.
     */
    protected boolean onCanvas(int x, int y)
    {
       // set horizontal and vertical clipping
       int horizontalClipping = canvasPoint.x + canvasWidth;
       int verticalClipping = canvasPoint.y + canvasHeight;
-
-      if (horizontalClipping >= x && verticalClipping >= y)
-      {
-         return true;
-      }
-      return false;
+      
+      return (horizontalClipping >= x && verticalClipping >= y);
    }
 
    /**
@@ -115,7 +105,7 @@ public abstract class EyeTrackingMediator
     */
    public boolean getCursorVisibility()
    {
-      return cursorVisible;
+      return mCursorVisible;
    }
 
    /**
@@ -125,7 +115,7 @@ public abstract class EyeTrackingMediator
     */
    public void setCursorVisibility(boolean visibility)
    {
-      cursorVisible = visibility;
+      mCursorVisible = visibility;
    }
 
    /**
@@ -134,7 +124,7 @@ public abstract class EyeTrackingMediator
     *
     * @param newGazePoint - the new point from the eye tracker
     */
-   protected abstract void display(Point newGazePoint);
+   protected abstract void newPoint(Point newGazePoint);
 
    /**
     * A Runnable object that will loop until told to stop, calling its display
@@ -144,35 +134,33 @@ public abstract class EyeTrackingMediator
     * @author Corey Engelman
     *
     */
-   public class RenderingLoop implements Runnable
+   public class FilterPoller implements Runnable
    {
-
       @Override
       public void run()
       {
-
          if (!testMode)
          {
-            filter.waitForNewCoordinate();
+            mFilter.waitForNewCoordinate();
          }
 
          while (!shouldStop)
          {
             if (!testMode)
             {
-               synchronized (filter)
+               synchronized (mFilter)
                {
-                  Point newGazePoint = filter.getNewCoordinate();
-                  display(newGazePoint);
+                  Point lastGazePoint = mFilter.getLastFilteredCoordinate();
+                  newPoint(lastGazePoint);
 
-                  filter.notifyCoordinateRead();
-                  filter.waitForNewCoordinate();
+                  mFilter.notifyCoordinateRead();
+                  mFilter.waitForNewCoordinate();
                }
 
             }
             else
             {
-               display(null);
+               newPoint(null);
             }
 
          }
@@ -188,7 +176,7 @@ public abstract class EyeTrackingMediator
     */
    public synchronized boolean isAnimating()
    {
-      return (thread != null);
+      return (mPollingThread != null);
    }
 
    /**
@@ -196,16 +184,10 @@ public abstract class EyeTrackingMediator
     */
    public synchronized void start()
    {
-      if (runnable == null)
-      {
-         runnable = new RenderingLoop();
+      mPollingThread = new Thread(new FilterPoller());
+      mPollingThread.setName("Filter Polling Thread");
 
-         thread = new Thread(runnable);
-         thread.setName("Rendering Thread");
-
-         thread.start();
-
-      }
+      mPollingThread.start();
 
    }
 
@@ -229,7 +211,7 @@ public abstract class EyeTrackingMediator
       shouldStop = true;
       notifyAll();
 
-      while (shouldStop && thread != null)
+      while (shouldStop && mPollingThread != null)
       {
          try
          {
@@ -256,12 +238,12 @@ public abstract class EyeTrackingMediator
 
    public Filter getFilter()
    {
-      return filter;
+      return mFilter;
    }
 
    public boolean isPaintingFixations()
    {
-      return paintingFixations;
+      return mDrawGazePoints;
    }
 
    public void setTestMode(boolean testMode)

@@ -2,7 +2,7 @@ package rit.eyeTrackingAPI.ApplicationUtilities;
 
 import javax.swing.JFrame;
 
-import rit.eyeTrackingAPI.EyeTrackerUtilities.udpClients.EyeTrackerClient;
+import rit.eyeTrackingAPI.EyeTrackerUtilities.eyeTrackerClients.EyeTrackerClient;
 
 /**
  * This class represents an application using eye tracking. The class has a
@@ -42,6 +42,6 @@ public abstract class EyeTrackingApp
     * user is looking, the custom EyeTrackingMediator should draw a cursor at
     * the coordinates of the users gaze everytime it refreshes.
     */
-   protected EyeTrackingMediator eyeMediator;
+   protected EyeTrackingFilterListener eyeMediator;
 
 }
