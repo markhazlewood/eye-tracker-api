@@ -328,7 +328,7 @@ public class IViewXClient extends EyeTrackerClient
 
                               // Report a new gaze point to the "cursor" object assigned
                               // to this listener
-                              cursor.setCoordinates(screenX, screenY);
+                              mGazePointContainer.setCoordinates(screenX, screenY);
 
                            }
                            catch (NumberFormatException ex)
@@ -338,7 +338,7 @@ public class IViewXClient extends EyeTrackerClient
 
                               // Report a new gaze point to the "cursor" object assigned
                               // to this listener
-                              cursor.setCoordinates(screenX, screenY);
+                              mGazePointContainer.setCoordinates(screenX, screenY);
                            }
                            catch (ArrayIndexOutOfBoundsException ex)
                            {

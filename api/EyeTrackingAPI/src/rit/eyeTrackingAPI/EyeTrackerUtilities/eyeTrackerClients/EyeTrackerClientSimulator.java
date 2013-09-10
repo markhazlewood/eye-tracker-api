@@ -216,6 +216,10 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
       }
    }
 
+   /**
+    * Primary operational method for the client. Will read in points from the
+    * interpolated list then exit the thread.
+    */
    @Override
    protected void clientOperation()
    {
@@ -228,10 +232,11 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
          {         
             // Pull out next interpolated point
             currentPoint = mInterpolatedGazePoints.get(pointIndex);
-            pointIndex = (pointIndex == mInterpolatedGazePoints.size()-1) ? 0 : pointIndex+1;
+            pointIndex = pointIndex+1;
 
             // Send it out
-            this.cursor.setCoordinates(currentPoint.getPoint().x, currentPoint.getPoint().y);
+            mGazePointContainer.setCoordinates( currentPoint.getPoint().x, 
+                                                currentPoint.getPoint().y);
 
             // Wait to send out the next point
             try
@@ -252,6 +257,9 @@ public class EyeTrackerClientSimulator extends EyeTrackerClient
       mActive = false;
    }
    
+   /**
+    * Container class for a point and a duration.
+    */
    public class SimulatedGazePoint
    {
       private Point mPoint = new Point();
