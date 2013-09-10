@@ -17,10 +17,10 @@ public class PassthroughFilter extends Filter
    @Override
    public synchronized void filter(int x, int y)
    {
-      newCoordinate = new Point(x, y);
-      newCoordinateAvailable = true;
+      mLastFilteredCoordinate = new Point(x, y);
+      mNewCoordinateAvailable = true;
       notifyAll();
-      while (!coordinateRead)
+      while (!mLatestCoordinateHasBeenRead)
       {
          try
          {

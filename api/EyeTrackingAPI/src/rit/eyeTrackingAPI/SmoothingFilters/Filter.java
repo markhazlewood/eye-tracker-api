@@ -11,18 +11,16 @@ import java.awt.Point;
  */
 public abstract class Filter
 {
-
-   protected int filterIntensity = 0;
-   protected int filterCounter = 0;
-   protected boolean newCoordinateAvailable = false;
-   protected Point newCoordinate;
-   protected boolean coordinateRead = false;
+   protected int mFilterIntensity = 0;
+   protected int mFilterCounter = 0;
+   protected boolean mNewCoordinateAvailable = false;
+   protected Point mLastFilteredCoordinate;
+   protected boolean mLatestCoordinateHasBeenRead = false;
 
    /**
     * Constructs a filter with the cursor to be updated, the filter intensity,
     * and type.
     *
-    * @param cursor - the cursor that should be updated by this filter.
     */
    public Filter()
    {
@@ -32,37 +30,42 @@ public abstract class Filter
     * Constructs a filter with the cursor to be updated, the filter intensity,
     * and type.
     *
-    * @param filterIntensity - the number of points taken in per filter
-    * calculation
-    * @param cursor - the cursor that should be updated by this filter.
+    * @param filterIntensity The number of points taken in per filter calculation
     */
    public Filter(int filterIntensity)
    {
-      this.filterIntensity = filterIntensity;
+      mFilterIntensity = filterIntensity;
    }
 
    /**
     * Call filter with a string of tokens with new eye position data
     *
-    * @param tokens - {iViewX Command string, time stamp in milli seconds, eye
-    * type: l - left|r - right|b - both, left eye x position, right eye x
-    * position, left eye y position, right eye y position}
+    * @param x
+    * @param y
     */
    public abstract void filter(int x, int y);
 
+   /**
+    * Called to check if a new coordinate is available.
+    * 
+    * @return True if a new coordinate was available since the last time this
+    * method was called, otherwise false.
+    */
    public boolean newCoordinateAvailable()
    {
-      boolean copy = this.newCoordinateAvailable;
-      newCoordinateAvailable = false;
-      return copy;
+      boolean available = mNewCoordinateAvailable;
+      mNewCoordinateAvailable = false;
+      
+      return available;
    }
 
    /**
-    * Wait until the next coordinate is received to allow other threads to run
+    * Suspends the current thread until the next coordinate is received to allow 
+    * other threads to run
     */
    public synchronized void waitForNewCoordinate()
    {
-      while (!newCoordinateAvailable)
+      while (!mNewCoordinateAvailable)
       {
          try
          {
@@ -73,7 +76,9 @@ public abstract class Filter
             e.printStackTrace();
          }
       }
-      coordinateRead = false;
+      
+      // New coordinate is available, set read state to false
+      mLatestCoordinateHasBeenRead = false;
    }
 
    /**
@@ -81,20 +86,18 @@ public abstract class Filter
     */
    public synchronized void notifyCoordinateRead()
    {
-      coordinateRead = true;
-      newCoordinateAvailable = false;
-      notifyAll();
-      //System.out.println("notified filter");
+      mLatestCoordinateHasBeenRead = true;
+      mNewCoordinateAvailable = false;
+      notifyAll();      
    }
 
    /**
-    * Access the current filtered coordinate.
+    * Access the last filtered gaze coordinate.
     *
-    * @return - the filtered gaze point
+    * @return the filtered gaze point in screen space
     */
-   public Point getNewCoordinate()
+   public Point getLastFilteredCoordinate()
    {
-      return newCoordinate;
+      return mLastFilteredCoordinate;
    }
-
 }

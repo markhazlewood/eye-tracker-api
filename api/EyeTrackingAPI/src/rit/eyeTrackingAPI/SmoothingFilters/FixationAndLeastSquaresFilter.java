@@ -77,18 +77,18 @@ public class FixationAndLeastSquaresFilter extends Filter
 
       ////System.out.println("Distance = " + distance);
       ////System.out.println("Distance as int = " + (int) distance);
-      if (filterCounter == 0)
+      if (mFilterCounter == 0)
       {
          if (initial)
          {
-            newCoordinate = new Point(current);
-            newCoordinateAvailable = true;
+            mLastFilteredCoordinate = new Point(current);
+            mNewCoordinateAvailable = true;
             initial = false;
-            Fixation fix = new Fixation(newCoordinate);
+            Fixation fix = new Fixation(mLastFilteredCoordinate);
             fixationList.add(fix);
             currentFixation = fix;
             notifyAll();
-            while (!coordinateRead)
+            while (!mLatestCoordinateHasBeenRead)
             {
                try
                {
@@ -122,34 +122,34 @@ public class FixationAndLeastSquaresFilter extends Filter
    {
 
       //get [points from eye tracker
-      if (filterCounter < filterIntensity)
+      if (mFilterCounter < mFilterIntensity)
       {
-         eyeTrackerRawData[filterCounter][0] = x;
+         eyeTrackerRawData[mFilterCounter][0] = x;
          // adjustedData[filterCounter][0] =
          // eyeTrackerRawData[filterCounter][0];
-         eyeTrackerRawData[filterCounter][1] = y;
+         eyeTrackerRawData[mFilterCounter][1] = y;
          if (xMin_Regression == null)
          {
-            xMin_Regression = eyeTrackerRawData[filterCounter][0];
+            xMin_Regression = eyeTrackerRawData[mFilterCounter][0];
          }
-         else if (eyeTrackerRawData[filterCounter][0] < xMin_Regression)
+         else if (eyeTrackerRawData[mFilterCounter][0] < xMin_Regression)
          {
-            xMin_Regression = eyeTrackerRawData[filterCounter][0];
+            xMin_Regression = eyeTrackerRawData[mFilterCounter][0];
          }
          if (xMax_Regression == null)
          {
-            xMax_Regression = eyeTrackerRawData[filterCounter][0];
+            xMax_Regression = eyeTrackerRawData[mFilterCounter][0];
          }
-         else if (eyeTrackerRawData[filterCounter][0] > xMax_Regression)
+         else if (eyeTrackerRawData[mFilterCounter][0] > xMax_Regression)
          {
-            xMax_Regression = eyeTrackerRawData[filterCounter][0];
+            xMax_Regression = eyeTrackerRawData[mFilterCounter][0];
          }
 
-         filterCounter++;
+         mFilterCounter++;
       }
 
       //calculate regression line
-      if (filterCounter == (filterIntensity))
+      if (mFilterCounter == (mFilterIntensity))
       {
          double coefficients[] = Regression.linear_equation(eyeTrackerRawData, LINEAR_FIT);
          //double coefficients[] = Regression.linear_equation(eyeTrackerRawData, QUADRATIC_FIT);
@@ -161,11 +161,11 @@ public class FixationAndLeastSquaresFilter extends Filter
          xIncrement_Regression = (xMax_Regression - xMin_Regression)
                  / NUM_REGRESSION_REDRAW_DATA_POINTS;
          double currentXValue = 0.0;
-         if (eyeTrackerRawData[0][0] < eyeTrackerRawData[filterIntensity - 1][0])
+         if (eyeTrackerRawData[0][0] < eyeTrackerRawData[mFilterIntensity - 1][0])
          {
             currentXValue = xMin_Regression;
          }
-         else if (eyeTrackerRawData[0][0] > eyeTrackerRawData[filterIntensity - 1][0])
+         else if (eyeTrackerRawData[0][0] > eyeTrackerRawData[mFilterIntensity - 1][0])
          {
             currentXValue = xMax_Regression;
          }
@@ -179,11 +179,11 @@ public class FixationAndLeastSquaresFilter extends Filter
                adjustedData[i][1] += Math.pow(adjustedData[i][0], j)
                        * coefficients[j];
             }
-            if (eyeTrackerRawData[0][0] <= eyeTrackerRawData[filterIntensity - 1][0])
+            if (eyeTrackerRawData[0][0] <= eyeTrackerRawData[mFilterIntensity - 1][0])
             {
                currentXValue += xIncrement_Regression;
             }
-            else if (eyeTrackerRawData[0][0] > eyeTrackerRawData[filterIntensity - 1][0])
+            else if (eyeTrackerRawData[0][0] > eyeTrackerRawData[mFilterIntensity - 1][0])
             {
                currentXValue -= xIncrement_Regression;
             }
@@ -198,10 +198,10 @@ public class FixationAndLeastSquaresFilter extends Filter
           * 
           * }
           */
-         filterCounter++;
+         mFilterCounter++;
       }
 
-      if (filterCounter == (filterIntensity + 1))
+      if (mFilterCounter == (mFilterIntensity + 1))
       {
          for (int i = 0; i < NUM_REGRESSION_REDRAW_DATA_POINTS; i++)
          {
@@ -210,22 +210,22 @@ public class FixationAndLeastSquaresFilter extends Filter
              && regressionIndex < NUM_REGRESSION_REDRAW_DATA_POINTS) {*/
             if (regressionIndex == NUM_REGRESSION_REDRAW_DATA_POINTS - 1)
             {
-               newCoordinate = new Point(
+               mLastFilteredCoordinate = new Point(
                        (int) eyeTrackerRawData[eyeTrackerRawData.length - 1][0],
                        (int) eyeTrackerRawData[eyeTrackerRawData.length - 1][1]);
-               current = newCoordinate;
+               current = mLastFilteredCoordinate;
             }
             else
             {
-               newCoordinate = new Point(
+               mLastFilteredCoordinate = new Point(
                        (int) adjustedData[regressionIndex][0],
                        (int) adjustedData[regressionIndex][1]);
             }
 
-            newCoordinateAvailable = true;
+            mNewCoordinateAvailable = true;
             System.out.println("notifying from filterleastesquares");
             notifyAll();
-            System.out.println("coordinateRead: " + coordinateRead);
+            System.out.println("coordinateRead: " + mLatestCoordinateHasBeenRead);
             //System.out.println("\tfilter waiting with i: " + i);
             do
             {
@@ -237,8 +237,8 @@ public class FixationAndLeastSquaresFilter extends Filter
                {
                   e.printStackTrace();
                }
-               System.out.println("woke up with coordinateRead: " + coordinateRead);
-            } while (!coordinateRead);
+               System.out.println("woke up with coordinateRead: " + mLatestCoordinateHasBeenRead);
+            } while (!mLatestCoordinateHasBeenRead);
             //System.out.println("\tfilter woke up with i: " + i);
             regressionIndex++;
 
@@ -255,15 +255,15 @@ public class FixationAndLeastSquaresFilter extends Filter
 
             //System.out.println("a");
             regressionIndex = 0;
-            if (filterCounter == (filterIntensity + 1))
+            if (mFilterCounter == (mFilterIntensity + 1))
             {
-               filterCounter = 0;
+               mFilterCounter = 0;
                xMin_Regression = null;
                xMax_Regression = null;
             }
             //System.out.println("b");
 
-            Fixation fix = new Fixation(newCoordinate);
+            Fixation fix = new Fixation(mLastFilteredCoordinate);
             boolean repeatFixation = false;
             for (Fixation f : fixationList)
             {
