@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.hazydesigns.capstone.worldWindGazeInput;
 
 import gov.nasa.worldwind.avlist.AVKey;
@@ -18,15 +13,15 @@ import java.awt.Point;
 import java.awt.Robot;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import rit.eyeTrackingAPI.ApplicationUtilities.EyeTrackingFilterListener;
 import rit.eyeTrackingAPI.DataConstructs.GazePoint;
-import rit.eyeTrackingAPI.EyeTrackerUtilities.eyeTrackerClients.EyeTrackerClient;
 import rit.eyeTrackingAPI.EyeTrackerUtilities.eyeTrackerClients.EyeTrackerClientSimulator;
 import rit.eyeTrackingAPI.SmoothingFilters.Filter;
 import rit.eyeTrackingAPI.SmoothingFilters.PassthroughFilter;
-import sun.security.util.SecurityConstants;
 
 /**
  *
@@ -39,10 +34,12 @@ public class MainFrame extends JFrame
    
    // Eye tracker connection stuff
    private GazePoint mGazePoint;
-   private Filter mSmoothingFilter;
-   private EyeTrackerClient mEyeTrackerClient;
-   private EyeTrackingFilterListener mEyeTrackerListener;
+   private PassthroughFilter mSmoothingFilter;
+   private EyeTrackerClientSimulator mEyeTrackerClient;
+   private EyeTrackerListener mEyeTrackerListener;
    
+   // UI stuff
+   private JButton mStartSimulationButton;
    
    private static final String TEST_FILE_PATH = System.getProperty("java.io.tmpdir") + "\\simulatedEyeData.txt";
 
@@ -54,28 +51,36 @@ public class MainFrame extends JFrame
       mSmoothingFilter = new PassthroughFilter();
       mGazePoint = new GazePoint(mSmoothingFilter);
       
-      mEyeTrackerClient = new EyeTrackerClientSimulator(mGazePoint, TEST_FILE_PATH, (short)0, false);
-      mEyeTrackerClient.connect();
-      ((EyeTrackerClientSimulator)mEyeTrackerClient).setJitter(5);
-      
-      ActionListener l = new ActionListener()
-      {
-         @Override
-         public void actionPerformed(ActionEvent ae)
-         {
-            System.out.println("Here we are");
-         }
-      };
-      
-      mEyeTrackerListener = new EyeTrackerListener(mSmoothingFilter, l, false, 0);
+      mEyeTrackerListener = new EyeTrackerListener(mSmoothingFilter, null, false, 0);
    }
    
+   /**
+    * 
+    */
    private void initialize()
    {
       mMainViewPanel = new WorldWindPanel(mCanvasSize);
       
       getContentPane().setLayout(new BorderLayout());
       getContentPane().add(mMainViewPanel, BorderLayout.CENTER);
+      
+      mStartSimulationButton = new JButton("Start Sim");
+      JPanel topPanel = new JPanel(new BorderLayout());
+      topPanel.add(mStartSimulationButton, BorderLayout.WEST);
+      getContentPane().add(topPanel, BorderLayout.NORTH);
+      
+      mStartSimulationButton.addActionListener(new ActionListener()
+      {
+         @Override
+         public void actionPerformed(ActionEvent ae)
+         {
+            mEyeTrackerListener.start();
+            
+            mEyeTrackerClient = new EyeTrackerClientSimulator(mGazePoint, TEST_FILE_PATH, (short)0, false);
+            ((EyeTrackerClientSimulator)mEyeTrackerClient).setJitter(10);
+            mEyeTrackerClient.start();
+         }
+      });
 
       // Register a rendering exception listener that's notified when exceptions occur during rendering.
       mMainViewPanel.getWorldWindow().addRenderingExceptionListener(new RenderingExceptionListener()
@@ -106,15 +111,12 @@ public class MainFrame extends JFrame
             mMainViewPanel.getWorldWindow().addSelectListener((SelectListener) layer);
          }
       }
-
+      
       this.pack();
 
       // Center the application on the screen.
       WWUtil.alignComponent(null, this, AVKey.CENTER);
       this.setResizable(true);
-      
-      mEyeTrackerClient.start();
-      mEyeTrackerListener.start();
    }
 
    /**
@@ -144,6 +146,8 @@ public class MainFrame extends JFrame
    }// </editor-fold>//GEN-END:initComponents
 
    /**
+    * Application entry point.
+    * 
     * @param args the command line arguments
     */
    public static void main(String args[])
@@ -201,44 +205,5 @@ public class MainFrame extends JFrame
    // Variables declaration - do not modify//GEN-BEGIN:variables
    // End of variables declaration//GEN-END:variables
 
-   
-   private class EyeTrackerListener extends EyeTrackingFilterListener
-   {
-      Robot mRobot;
-      
-      public EyeTrackerListener(Filter filter, ActionListener actionListener,
-                                 boolean paintingFixations, int display)
-      {
-         super(filter, actionListener, paintingFixations, display);
-         
-         try
-         {
-            mRobot = new Robot();
-         }
-         catch (AWTException ex)
-         {
-            ex.printStackTrace();
-         }
-      }
-   
-      /**
-       * This function will be called whenever the filter owned by this class has a
-       * new gaze point to report.
-       *
-       * @param newUserGazePoint, the new gaze point
-       */
-      @Override
-      protected void newPoint(Point newUserGazePoint)
-      {
-         mRobot.mouseMove(newUserGazePoint.x, newUserGazePoint.y);
-         System.out.println(newUserGazePoint);
-      }
-
-      @Override
-      protected void updateCursorCoordinates()
-      {
-         System.out.println("");
-      }
-   }
    
 }
