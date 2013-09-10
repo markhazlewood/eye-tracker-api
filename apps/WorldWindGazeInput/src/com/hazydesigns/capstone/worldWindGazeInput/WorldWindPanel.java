@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package com.hazydesigns.capstone.worldWindGazeInput;
 
 import gov.nasa.worldwind.Model;
@@ -13,16 +7,21 @@ import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import javax.swing.JPanel;
 
 /**
- *
- * @author mhazlewood
+ * Container panel for the World Wind view.
+ * 
+ * @author Mark Hazlewood
+ * 
+ * @see JPanel
+ * @see WorldWindow
  */
 public class WorldWindPanel extends JPanel
 {
-   private WorldWindow mWorldWindow;
+   private final WorldWindow mWorldWindow;
 
    /**
     * Creates new form WorldWindPanel
@@ -40,13 +39,23 @@ public class WorldWindPanel extends JPanel
       mWorldWindow.setModel(m);
       
       add((Component)mWorldWindow, BorderLayout.CENTER);
+      
+      setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
    }
    
+   /**
+    * 
+    * @return 
+    */
    private WorldWindow createWorldWindow()
    {
        return new WorldWindowGLCanvas();
    }
    
+   /**
+    * 
+    * @return 
+    */
    public WorldWindow getWorldWindow()
    {
       return mWorldWindow;

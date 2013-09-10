@@ -240,11 +240,6 @@ public class MainLayoutController implements Initializable
             Point p = MouseInfo.getPointerInfo().getLocation();
             String line = p.x + "," + p.y + ",50";
             mTextLines.add(line);
-            
-            if (mTextLines.size() % 10 == 0)
-            {
-               System.out.println(line);
-            }            
 
             Thread.sleep(100);
          }
