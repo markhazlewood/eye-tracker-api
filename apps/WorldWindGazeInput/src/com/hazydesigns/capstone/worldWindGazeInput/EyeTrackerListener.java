@@ -22,8 +22,10 @@ public class EyeTrackerListener extends EyeTrackingFilterListener
     * @param paintingFixations
     * @param display 
     */
-   public EyeTrackerListener(Filter filter, ActionListener actionListener,
-                              boolean paintingFixations, int display)
+   public EyeTrackerListener( Filter filter, 
+                              ActionListener actionListener,
+                              boolean paintingFixations, 
+                              int display)
    {
       super(filter, actionListener, paintingFixations, display);
 

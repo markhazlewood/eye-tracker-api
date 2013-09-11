@@ -1,26 +1,18 @@
 package com.hazydesigns.capstone.worldWindGazeInput;
 
 import gov.nasa.worldwind.avlist.AVKey;
-import gov.nasa.worldwind.event.RenderingExceptionListener;
 import gov.nasa.worldwind.event.SelectListener;
 import gov.nasa.worldwind.exception.WWAbsentRequirementException;
-import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.util.WWUtil;
-import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.Robot;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import rit.eyeTrackingAPI.ApplicationUtilities.EyeTrackingFilterListener;
 import rit.eyeTrackingAPI.DataConstructs.GazePoint;
 import rit.eyeTrackingAPI.EyeTrackerUtilities.eyeTrackerClients.EyeTrackerClientSimulator;
-import rit.eyeTrackingAPI.SmoothingFilters.Filter;
 import rit.eyeTrackingAPI.SmoothingFilters.PassthroughFilter;
 
 /**
@@ -69,48 +61,45 @@ public class MainFrame extends JFrame
       topPanel.add(mStartSimulationButton, BorderLayout.WEST);
       getContentPane().add(topPanel, BorderLayout.NORTH);
       
-      mStartSimulationButton.addActionListener(new ActionListener()
+      mStartSimulationButton.addActionListener((ActionEvent ae) ->
       {
-         @Override
-         public void actionPerformed(ActionEvent ae)
-         {
-            mEyeTrackerListener.start();
-            
-            mEyeTrackerClient = new EyeTrackerClientSimulator(mGazePoint, TEST_FILE_PATH, (short)0, false);
-            ((EyeTrackerClientSimulator)mEyeTrackerClient).setJitter(10);
-            mEyeTrackerClient.start();
-         }
+         mEyeTrackerListener.start();
+         
+         mEyeTrackerClient = new EyeTrackerClientSimulator(mGazePoint, TEST_FILE_PATH, (short)0, false);
+         ((EyeTrackerClientSimulator)mEyeTrackerClient).setJitter(10);
+         mEyeTrackerClient.start();
       });
 
       // Register a rendering exception listener that's notified when exceptions occur during rendering.
-      mMainViewPanel.getWorldWindow().addRenderingExceptionListener(new RenderingExceptionListener()
+      mMainViewPanel.getWorldWindow().addRenderingExceptionListener((Throwable t) ->
       {
-         @Override
-         public void exceptionThrown(Throwable t)
+         if (t instanceof WWAbsentRequirementException)
          {
-            if (t instanceof WWAbsentRequirementException)
-            {
-               String message = "Computer does not meet minimum graphics requirements.\n";
-               message += "Please install up-to-date graphics driver and try again.\n";
-               message += "Reason: " + t.getMessage() + "\n";
-               message += "This program will end when you press OK.";
-
-               JOptionPane.showMessageDialog(MainFrame.this, message, "Unable to Start Program",
-                       JOptionPane.ERROR_MESSAGE);
-               System.exit(-1);
-            }
+            String message = "Computer does not meet minimum graphics requirements.\n";
+            message += "Please install up-to-date graphics driver and try again.\n";
+            message += "Reason: " + t.getMessage() + "\n";
+            message += "This program will end when you press OK.";
+            
+            JOptionPane.showMessageDialog(MainFrame.this, message, "Unable to Start Program",
+                    JOptionPane.ERROR_MESSAGE);
+            System.exit(-1);
          }
       });
 
       // Search the layer list for layers that are also select listeners and register them with the World
       // Window. This enables interactive layers to be included without specific knowledge of them here.
-      for (Layer layer : mMainViewPanel.getWorldWindow().getModel().getLayers())
+      /*for (Layer layer : mMainViewPanel.getWorldWindow().getModel().getLayers())
       {
          if (layer instanceof SelectListener)
          {
             mMainViewPanel.getWorldWindow().addSelectListener((SelectListener) layer);
          }
-      }
+      }*/
+      
+      mMainViewPanel.getWorldWindow().getModel().getLayers().stream().filter((layer) -> (layer instanceof SelectListener)).forEach((layer) ->
+      {
+         mMainViewPanel.getWorldWindow().addSelectListener((SelectListener) layer);
+      });
       
       this.pack();
 
@@ -187,18 +176,14 @@ public class MainFrame extends JFrame
       //</editor-fold>
 
       /* Create and display the form */
-      java.awt.EventQueue.invokeLater(new Runnable()
+      java.awt.EventQueue.invokeLater(() ->
       {
-         @Override
-         public void run()
-         {
-            MainFrame main = new MainFrame();
-            main.setTitle("World Wind Gaze Input");
-            main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            
-            main.initialize();
-            main.setVisible(true);
-         }
+         MainFrame main = new MainFrame();
+         main.setTitle("World Wind Gaze Input");
+         main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+         
+         main.initialize();
+         main.setVisible(true);
       });
    }
 

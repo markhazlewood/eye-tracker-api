@@ -39,13 +39,9 @@ public class MousePositionRecorder extends Application
       
       // Add an event handler for the scene's close request, so we can tell the
       // main layout controller to shut down properly
-      scene.getWindow().setOnCloseRequest(new EventHandler<WindowEvent>()
+      scene.getWindow().setOnCloseRequest((WindowEvent t) ->
       {
-         @Override
-         public void handle(WindowEvent t)
-         {
-            mMainController.shutdown();
-         }
+         mMainController.shutdown();
       });
    }
 

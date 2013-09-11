@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 import java.util.Timer;
@@ -24,6 +26,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import sun.misc.Timeable;
 
 /**
  *
@@ -36,6 +39,9 @@ public class MainLayoutController implements Initializable
 
    @FXML
    Label formLabel;
+   
+   @FXML
+   Label timerLabel;
 
    private boolean mRecording = false;
    private Timer mCountdownTimer;
@@ -47,6 +53,7 @@ public class MainLayoutController implements Initializable
    private ArrayList<String> mTextLines;
    
    private static final String TEST_FILE_PATH = System.getProperty("java.io.tmpdir") + "\\simulatedEyeData.txt";
+   private static final int SAMPLE_DELAY_milliseconds = 100;
 
    @Override
    public void initialize(URL url, ResourceBundle rb)
@@ -102,6 +109,7 @@ public class MainLayoutController implements Initializable
          killThreads();
 
          formLabel.setText("Awaiting orders");
+         timerLabel.setText("");
          recordButton.setDisable(false);
          
          if (mTextLines.size() > 0)
@@ -142,20 +150,27 @@ public class MainLayoutController implements Initializable
             @Override
             public void run()
             {
-               Platform.runLater(new Runnable()
+               Platform.runLater(() ->
                {
-                  @Override
-                  public void run()
+                  if (mRecording == true && formLabel.getText().equals("Recording..."))
                   {
-                     if (mRecording == true && formLabel.getText().equals("Recording..."))
-                     {
-                        formLabel.setText("Recording");
-                     }
-                     else
-                     {
-                        formLabel.setText(formLabel.getText() + ".");
-                     }
+                     formLabel.setText("Recording");
                   }
+                  else
+                  {
+                     formLabel.setText(formLabel.getText() + ".");
+                  }
+                  
+                  long secondsRecording = (SAMPLE_DELAY_milliseconds * mTextLines.size()) / 1000;
+                  Duration d = Duration.ofSeconds(secondsRecording);
+                  
+                  long hours = d.toHours();
+                  long minutes = d.minusHours(d.toHours()).toMinutes();
+                  long seconds = d.minusMinutes(minutes).minusHours(hours).getSeconds();
+                  
+                  String label = String.format("%02d:%02d:%02d", hours, minutes, seconds);
+                  timerLabel.setText(label);
+                  
                });
             }
          }, 500, 500);
@@ -166,13 +181,9 @@ public class MainLayoutController implements Initializable
             @Override
             public void run()
             {
-               Platform.runLater(new Runnable()
+               Platform.runLater(() ->
                {
-                  @Override
-                  public void run()
-                  {
-                     formLabel.setText(formLabel.getText() + " 2 ");
-                  }
+                  formLabel.setText(formLabel.getText() + " 2 ");
                });
             }
 
@@ -183,14 +194,9 @@ public class MainLayoutController implements Initializable
             @Override
             public void run()
             {
-               Platform.runLater(new Runnable()
+               Platform.runLater(() ->
                {
-
-                  @Override
-                  public void run()
-                  {
-                     formLabel.setText(formLabel.getText() + " 1 ");
-                  }
+                  formLabel.setText(formLabel.getText() + " 1 ");
                });
             }
 
@@ -201,21 +207,17 @@ public class MainLayoutController implements Initializable
             @Override
             public void run()
             {
-               Platform.runLater(new Runnable()
+               Platform.runLater(() ->
                {
-                  @Override
-                  public void run()
-                  {
-                     formLabel.setText("Recording");
-                     mRecording = true;
-
-                     mMousePollTask = new MousePollTask();
-                     mMousePollThread = new Thread(mMousePollTask);
-                     mMousePollThread.start();                     
-                     
-                     recordButton.setDisable(false);
-                     recordButton.setId("recordButton-recording");
-                  }
+                  formLabel.setText("Recording");
+                  mRecording = true;
+                  
+                  mMousePollTask = new MousePollTask();
+                  mMousePollThread = new Thread(mMousePollTask);
+                  mMousePollThread.start();
+                  
+                  recordButton.setDisable(false);
+                  recordButton.setId("recordButton-recording");
                });
             }
 
@@ -238,10 +240,10 @@ public class MainLayoutController implements Initializable
             }
             
             Point p = MouseInfo.getPointerInfo().getLocation();
-            String line = p.x + "," + p.y + ",50";
+            String line = p.x + "," + p.y + "," + SAMPLE_DELAY_milliseconds;
             mTextLines.add(line);
 
-            Thread.sleep(100);
+            Thread.sleep(SAMPLE_DELAY_milliseconds);
          }
 
          return null;
