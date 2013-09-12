@@ -1,5 +1,7 @@
 package com.hazydesigns.capstone.worldWindGazeInput;
 
+import com.hazydesigns.capstone.worldWindGazeInput.ui.GazeControlsLayer;
+import com.hazydesigns.capstone.worldWindGazeInput.ui.GazeControlsSelectListener;
 import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.WorldWindow;
@@ -38,8 +40,12 @@ public class WorldWindPanel extends JPanel
       Model m = (Model) WorldWind.createConfigurationComponent(AVKey.MODEL_CLASS_NAME);
       mWorldWindow.setModel(m);
       
-      add((Component)mWorldWindow, BorderLayout.CENTER);
+      GazeControlsLayer controlLayer = new GazeControlsLayer();
+      GazeControlsSelectListener controlSelectListener = new GazeControlsSelectListener(mWorldWindow, controlLayer);
+      mWorldWindow.addSelectListener(controlSelectListener);
+      mWorldWindow.getModel().getLayers().add(controlLayer);
       
+      add((Component)mWorldWindow, BorderLayout.CENTER);      
       setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
    }
    
