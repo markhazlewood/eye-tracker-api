@@ -12,6 +12,7 @@ import gov.nasa.worldwind.event.SelectEvent;
 import gov.nasa.worldwind.layers.ViewControlsSelectListener;
 import gov.nasa.worldwind.render.ScreenAnnotation;
 import gov.nasa.worldwind.view.orbit.OrbitView;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import javax.swing.Timer;
 
@@ -25,6 +26,8 @@ public class GazeControlsSelectListener extends ViewControlsSelectListener
    
    private Timer mGazeDelayTimer;
    private boolean mShouldActivate = false;
+   
+   private ScreenAnnotation mCursorImage = null;
 
    public GazeControlsSelectListener(WorldWindow wwd, GazeControlsLayer layer)
    {
@@ -45,13 +48,31 @@ public class GazeControlsSelectListener extends ViewControlsSelectListener
       });
       this.repeatTimer.start();
    }
+   
+   public GazeControlsSelectListener(WorldWindow wwd, GazeControlsLayer layer, ScreenAnnotation cursorImage)
+   {
+      this(wwd, layer);      
+      mCursorImage = cursorImage;
+   }
 
    @Override
    public void selected(SelectEvent event)
-   {
+   {      
       if (this.wwd == null)
       {
          return;
+      }
+      
+      if (mCursorImage != null)
+      {
+         if (event != null && event.getPickPoint() != null)
+         {
+            int x = event.getPickPoint().x;
+            int y = Math.abs(event.getPickPoint().y - this.wwd.getView().getViewport().height);
+
+            mCursorImage.setScreenPoint(new Point(x, y));
+            this.wwd.redraw();
+         }
       }
 
       if (!(this.wwd.getView() instanceof OrbitView))
