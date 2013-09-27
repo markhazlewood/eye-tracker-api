@@ -19,6 +19,8 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
 
@@ -88,6 +90,7 @@ public class WorldWindPanel extends JPanel
       });
       
       GazeControlsLayer controlLayer = new GazeControlsLayer();
+      controlLayer.setName("GazeControlLayer");
       GazeControlsSelectListener controlSelectListener = new GazeControlsSelectListener(mWorldWindow, controlLayer, mCursorImage);
       mWorldWindow.addSelectListener(controlSelectListener);
       mWorldWindow.getModel().getLayers().add(controlLayer);

@@ -3,9 +3,23 @@ package com.hazydesigns.capstone.worldWindGazeInput.ui;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.layers.ViewControlsLayer;
+import gov.nasa.worldwind.render.AnnotationAttributes;
 import gov.nasa.worldwind.render.DrawContext;
+import gov.nasa.worldwind.render.ScreenAnnotation;
+import gov.nasa.worldwind.util.Logging;
+import gov.nasa.worldwind.util.OGLUtil;
+import gov.nasa.worldwind.util.WWIO;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Image;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import javax.imageio.ImageIO;
 
 /**
  * A customization of the WorldWind-standard {@link ViewControlsLayer}.
@@ -21,170 +35,155 @@ import java.awt.Rectangle;
  */
 public class GazeControlsLayer extends ViewControlsLayer
 {
-
+   private final String mFullUserInterfaceImagePath = "images/ui.png";   
+   private final String mPanImagePath = "images/gaze_pan.png";
+   private final String mZoomInImagePath = "images/gaze_zoomIn.png";
+   private final String mZoomOutImagePath = "images/gaze_zoomOut.png";   
+   
+   private BufferedImage mFullUserInterfaceImage = null;
+   private BufferedImage mPanImage = null;
+   private BufferedImage mZoomInImage = null;
+   private BufferedImage mZoomOutImage = null;
+   
    public GazeControlsLayer()
    {
       super();
 
-      setScale(2);
+      showPanControls = true;
+      showLookControls = false;
+      showZoomControls = false;
+      showHeadingControls = false;
+      showPitchControls = false;
+      showFovControls = false;
+      showVeControls = false;
+
+      panSize = 870;
+      setScale(1);
+      
+      try
+      {         
+         mFullUserInterfaceImage = 
+                 ImageIO.read((InputStream)WWIO.getFileOrResourceAsStream( mFullUserInterfaceImagePath, 
+                                                                           this.getClass()));
+         mPanImage = 
+                 ImageIO.read((InputStream)WWIO.getFileOrResourceAsStream( mPanImagePath, 
+                                                                           this.getClass()));
+         mZoomInImage = 
+                 ImageIO.read((InputStream)WWIO.getFileOrResourceAsStream( mZoomInImagePath, 
+                                                                           this.getClass()));
+         mZoomOutImage = 
+                 ImageIO.read((InputStream)WWIO.getFileOrResourceAsStream( mZoomOutImagePath, 
+                                                                           this.getClass()));
+      }
+      catch (IOException ex)
+      {
+         ex.printStackTrace();
+      }
    }
 
-   //TODO: Override path to UI images
-   /*
-    protected final static String IMAGE_PAN = "images/view-pan-64x64.png";
-    protected final static String IMAGE_LOOK = "images/view-look-64x64.png";
-    protected final static String IMAGE_HEADING_LEFT = "images/view-heading-left-32x32.png";
-    protected final static String IMAGE_HEADING_RIGHT = "images/view-heading-right-32x32.png";
-    protected final static String IMAGE_ZOOM_IN = "images/view-zoom-in-32x32.png";
-    protected final static String IMAGE_ZOOM_OUT = "images/view-zoom-out-32x32.png";
-    protected final static String IMAGE_PITCH_UP = "images/view-pitch-up-32x32.png";
-    protected final static String IMAGE_PITCH_DOWN = "images/view-pitch-down-32x32.png";
-    protected final static String IMAGE_FOV_NARROW = "images/view-fov-narrow-32x32.png";
-    protected final static String IMAGE_FOV_WIDE = "images/view-fov-wide-32x32.png";
-    protected final static String IMAGE_VE_UP = "images/view-elevation-up-32x32.png";
-    protected final static String IMAGE_VE_DOWN = "images/view-elevation-down-32x32.png";
-    */
-   
    //TODO: Override initialize()?
+   @Override
+   protected void initialize(DrawContext dc)
+   {
+      if (this.initialized)
+      {
+         return;
+      }
+
+      // Setup user interface - common default attributes
+      AnnotationAttributes ca = new AnnotationAttributes();
+      ca.setAdjustWidthToText(AVKey.SIZE_FIXED);
+      ca.setInsets(new Insets(0, 0, 0, 0));
+      ca.setBorderWidth(0);
+      ca.setCornerRadius(0);      
+      ca.setBackgroundColor(new Color(0, 0, 0, 0));
+      ca.setImageOpacity(.5);
+      ca.setScale(scale);
+
+      final String NOTEXT = "";
+      final Point ORIGIN = new Point(0, 0);
+      
+      if (this.showPanControls)
+      {
+         // Pan
+         controlPan = new ScreenAnnotation(NOTEXT, ORIGIN, ca);
+         controlPan.setValue(AVKey.VIEW_OPERATION, AVKey.VIEW_PAN);
+         controlPan.getAttributes().setImageSource(mPanImagePath);
+         controlPan.getAttributes().setSize(new Dimension(panSize, panSize));
+         this.addRenderable(controlPan);
+      }
+      
+      if (this.showZoomControls)
+      {
+         // Zoom in
+         controlZoomIn = new ScreenAnnotation(NOTEXT, ORIGIN, ca);
+         controlZoomIn.setValue(AVKey.VIEW_OPERATION, AVKey.VIEW_ZOOM_IN);
+         controlZoomIn.getAttributes().setImageSource(mZoomInImagePath);
+         controlZoomIn.getAttributes().setSize(new Dimension(191, 191));
+         this.addRenderable(controlZoomIn);
+         
+         // Zoom out
+         controlZoomOut = new ScreenAnnotation(NOTEXT, ORIGIN, ca);
+         controlZoomOut.setValue(AVKey.VIEW_OPERATION, AVKey.VIEW_ZOOM_OUT);
+         controlZoomOut.getAttributes().setImageSource(mZoomOutImagePath);
+         controlZoomOut.getAttributes().setSize(new Dimension(1920, 1080));
+         this.addRenderable(controlZoomOut);
+      }
+
+      // Place controls according to layout and viewport dimension
+      updatePositions(dc);
+
+      this.initialized = true;
+   }
    
-   //TODO: Override updatePositions()
-   
+   @Override
+   protected Object getImageSource(String control)
+    {
+        if (control.equals(AVKey.VIEW_PAN))
+            return mPanImagePath;
+        else if (control.equals(AVKey.VIEW_ZOOM_IN))
+            return mZoomInImagePath;
+        else if (control.equals(AVKey.VIEW_ZOOM_OUT))
+            return mZoomOutImagePath;
+        else
+           return super.getImageSource(control);
+    }
+
    @Override
    protected void updatePositions(DrawContext dc)
    {
-      boolean horizontalLayout = this.layout.equals(AVKey.HORIZONTAL);
-
-      // horizontal layout: pan button + look button beside 2 rows of 4 buttons
-      int width = (showPanControls ? panSize : 0)
-              + (showLookControls ? panSize : 0)
-              + (showZoomControls ? buttonSize : 0)
-              + (showHeadingControls ? buttonSize : 0)
-              + (showPitchControls ? buttonSize : 0)
-              + (showFovControls ? buttonSize : 0)
-              + (showVeControls ? buttonSize : 0);
-      int height = Math.max(panSize, buttonSize * 2);
-
-      width = (int) (width * scale);
-      height = (int) (height * scale);
-
+      updateControlPositions(dc);
+   }
+   
+   public void updateControlPositions(DrawContext dc)
+   {
+      this.locationCenter = new Vec4(dc.getView().getViewport().width / 2, dc.getView().getViewport().height / 2, 0, 0);
+      Point centerLocation = new Point(dc.getView().getViewport().width / 2, dc.getView().getViewport().height / 2);
+      
       int xOffset = 0;
-      int yOffset = (int) (buttonSize * scale);
-
-      if (!horizontalLayout)
-      {
-         // vertical layout: pan button above look button above 4 rows of 2 buttons
-         int temp = height;
-         //noinspection SuspiciousNameCombination
-         height = width;
-         width = temp;
-         xOffset = (int) (buttonSize * scale);
-         yOffset = 0;
-      }
-
-      int halfPanSize = (int) (panSize * scale / 2);
-      int halfButtonSize = (int) (buttonSize * scale / 2);
-
-      this.locationCenter = new Vec4(dc.getView().getViewport().width/2, dc.getView().getViewport().height/2, 0, 0);
-      Rectangle controlsRectangle = new Rectangle(width, height);
-      Point controlsLocation = computeLocation(dc.getView().getViewport(), controlsRectangle);
-
-      // Layout start point
-      int x = controlsLocation.x;
-      int y = horizontalLayout ? controlsLocation.y : controlsLocation.y + height;
+      int yOffset = 0;
 
       if (this.showPanControls)
       {
-         if (!horizontalLayout)
-         {
-            y -= (int) (panSize * scale);
-         }
-         controlPan.setScreenPoint(new Point(x + halfPanSize, y));
-         if (horizontalLayout)
-         {
-            x += (int) (panSize * scale);
-         }
+         //xOffset = controlPan.getAttributes().getSize().width / 2;
+         yOffset = controlPan.getAttributes().getSize().height / 2;
+         controlPan.setScreenPoint(new Point(centerLocation.x + xOffset, centerLocation.y - yOffset));
       }
-      if (this.showLookControls)
-      {
-         if (!horizontalLayout)
-         {
-            y -= (int) (panSize * scale);
-         }
-         controlLook.setScreenPoint(new Point(x + halfPanSize, y));
-         if (horizontalLayout)
-         {
-            x += (int) (panSize * scale);
-         }
-      }
+      
       if (this.showZoomControls)
       {
-         if (!horizontalLayout)
-         {
-            y -= (int) (buttonSize * scale);
-         }
-         controlZoomIn.setScreenPoint(new Point(x + halfButtonSize + xOffset, y + yOffset));
-         controlZoomOut.setScreenPoint(new Point(x + halfButtonSize, y));
-         if (horizontalLayout)
-         {
-            x += (int) (buttonSize * scale);
-         }
-      }
-      if (this.showHeadingControls)
-      {
-         if (!horizontalLayout)
-         {
-            y -= (int) (buttonSize * scale);
-         }
-         controlHeadingLeft.setScreenPoint(new Point(x + halfButtonSize + xOffset, y + yOffset));
-         controlHeadingRight.setScreenPoint(new Point(x + halfButtonSize, y));
-         if (horizontalLayout)
-         {
-            x += (int) (buttonSize * scale);
-         }
-      }
-      if (this.showPitchControls)
-      {
-         if (!horizontalLayout)
-         {
-            y -= (int) (buttonSize * scale);
-         }
-         controlPitchUp.setScreenPoint(new Point(x + halfButtonSize + xOffset, y + yOffset));
-         controlPitchDown.setScreenPoint(new Point(x + halfButtonSize, y));
-         if (horizontalLayout)
-         {
-            x += (int) (buttonSize * scale);
-         }
-      }
-      if (this.showFovControls)
-      {
-         if (!horizontalLayout)
-         {
-            y -= (int) (buttonSize * scale);
-         }
-         controlFovNarrow.setScreenPoint(new Point(x + halfButtonSize + xOffset, y + yOffset));
-         controlFovWide.setScreenPoint(new Point(x + halfButtonSize, y));
-         if (horizontalLayout)
-         {
-            x += (int) (buttonSize * scale);
-         }
-      }
-      if (this.showVeControls)
-      {
-         if (!horizontalLayout)
-         {
-            y -= (int) (buttonSize * scale);
-         }
-         controlVeUp.setScreenPoint(new Point(x + halfButtonSize + xOffset, y + yOffset));
-         controlVeDown.setScreenPoint(new Point(x + halfButtonSize, y));
-         if (horizontalLayout)
-         {
-            x += (int) (buttonSize * scale);
-         }
+//         xOffset = controlZoomIn.getAttributes().getSize().width / 2;
+         yOffset = controlZoomIn.getAttributes().getSize().height / 2;
+         controlZoomIn.setScreenPoint(new Point(centerLocation.x + xOffset, centerLocation.y - yOffset));
+         
+//         xOffset = controlZoomOut.getAttributes().getSize().width / 2;
+         yOffset = controlZoomOut.getAttributes().getSize().height / 2;
+         controlZoomOut.setScreenPoint(new Point(centerLocation.x + xOffset, centerLocation.y - yOffset));
       }
 
       this.referenceViewport = dc.getView().getViewport();
    }
-   
+
    /**
     * Compute the screen location of the controls overall rectangle bottom right
     * corner according to either the location center if not null, or the screen
@@ -239,5 +238,25 @@ public class GazeControlsLayer extends ViewControlsLayer
       }
 
       return new Point((int) x, (int) y);
+   }
+   
+   public BufferedImage getFullUserInterfaceImage()
+   {
+      return mFullUserInterfaceImage;
+   }
+   
+   public BufferedImage getPanImage()
+   {
+      return mPanImage;
+   }
+   
+   public BufferedImage getZoomInImage()
+   {
+      return mZoomInImage;
+   }
+   
+   public BufferedImage getZoomOutImage()
+   {
+      return mZoomOutImage;
    }
 }
