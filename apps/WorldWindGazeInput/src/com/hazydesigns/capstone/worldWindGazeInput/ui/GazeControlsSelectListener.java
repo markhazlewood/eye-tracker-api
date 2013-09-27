@@ -10,6 +10,7 @@ import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.avlist.AVList;
 import gov.nasa.worldwind.event.SelectEvent;
 import gov.nasa.worldwind.layers.ViewControlsSelectListener;
+import gov.nasa.worldwind.pick.PickedObject;
 import gov.nasa.worldwind.render.ScreenAnnotation;
 import gov.nasa.worldwind.view.orbit.OrbitView;
 import java.awt.Point;
@@ -98,7 +99,7 @@ public class GazeControlsSelectListener extends ViewControlsSelectListener
       {
          // This case triggers when a control is activated and then the cursor
          // leaves the control, so we can treat it as a "mouse out" event
-
+         
          // Reset activation state
          mShouldActivate = false;
          
@@ -123,7 +124,24 @@ public class GazeControlsSelectListener extends ViewControlsSelectListener
 
       if (event.getEventAction().equals(SelectEvent.ROLLOVER)
               || event.getEventAction().equals(SelectEvent.HOVER))
-      {         
+      {
+         // Since the UI images are all centered in the view, and overlap, the 
+         // "top" one here will always be the zoom out image. We want to actually
+         // get the correct one. The order of nestings goes, from the center: 
+         // zoom in > pan > zoom out
+         // So use that order for "pressed" precedence
+         
+         boolean panPicked = false;
+         boolean zoomInPicked = false;
+         boolean zoomOutPicked = false;
+         
+         int pixelColor = ((GazeControlsLayer)viewControlsLayer).getPanImage().getRGB(event.getPickPoint().x, event.getPickPoint().y);
+         boolean transparent = ((pixelColor >> 24) == 0x00);
+         
+         String colorString = String.format("%08x", pixelColor);
+         
+         System.out.println(event.getPickPoint().toString() + " >> 0x" + colorString + " (" + transparent + ")");
+         
          this.pressedControl = (ScreenAnnotation) event.getTopObject();
          this.pressedControlType = controlType;
          
@@ -141,7 +159,7 @@ public class GazeControlsSelectListener extends ViewControlsSelectListener
             {
                // For gaze input, treat a hover or rollover as a selection after
                // a delay.
-               mShouldActivate = true;
+               //mShouldActivate = true;
 
                mGazeDelayTimer.stop();
             });
@@ -151,7 +169,7 @@ public class GazeControlsSelectListener extends ViewControlsSelectListener
          // If the timer has started, then elapsed, continue button activation
          else if (mGazeDelayTimer.isRunning() == false)
          {
-            mShouldActivate = true;
+            //mShouldActivate = true;
          }
       }
    }
