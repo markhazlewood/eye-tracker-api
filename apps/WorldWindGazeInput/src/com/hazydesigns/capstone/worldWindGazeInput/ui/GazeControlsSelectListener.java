@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.hazydesigns.capstone.worldWindGazeInput.ui;
 
 import gov.nasa.worldwind.WorldWindow;
@@ -33,9 +28,10 @@ import javax.swing.Timer;
  */
 public class GazeControlsSelectListener implements SelectListener
 {
-
    protected static final int DEFAULT_TIMER_DELAY = 50;
    protected static final int GAZE_ACTIVATION_DELAY = 1000;
+   protected final double PAN_STEP = 0.1;
+   protected final double ZOOM_STEP = 0.4;
 
    protected WorldWindow wwd;
    protected GazeControlsLayer controlsLayer;
@@ -44,18 +40,16 @@ public class GazeControlsSelectListener implements SelectListener
    protected String pressedControlType = null;
    protected Point lastPickPoint = null;
 
-   protected double panStep = .6;
-   protected double zoomStep = .8;
-   protected double headingStep = 1;
-   protected double pitchStep = 1;
-   protected double fovStep = 1.05;
-   protected double veStep = 0.1;
-
    private Timer mGazeDelayTimer;
    private boolean mShouldActivate = false;
 
    private ScreenAnnotation mCursorImage = null;
 
+   /**
+    * 
+    * @param wwd
+    * @param layer 
+    */
    public GazeControlsSelectListener(WorldWindow wwd, GazeControlsLayer layer)
    {
       this.wwd = wwd;
@@ -72,12 +66,22 @@ public class GazeControlsSelectListener implements SelectListener
       this.repeatTimer.start();
    }
 
+   /**
+    * 
+    * @param wwd
+    * @param layer
+    * @param cursorImage 
+    */
    public GazeControlsSelectListener(WorldWindow wwd, GazeControlsLayer layer, ScreenAnnotation cursorImage)
    {
       this(wwd, layer);
       mCursorImage = cursorImage;
    }
 
+   /**
+    * 
+    * @param event 
+    */
    @Override
    public void selected(SelectEvent event)
    {
@@ -260,6 +264,10 @@ public class GazeControlsSelectListener implements SelectListener
       }
    }
 
+   /**
+    * 
+    * @param controlType 
+    */
    protected void updateView(String controlType)
    {
       if (this.wwd == null)
@@ -280,16 +288,20 @@ public class GazeControlsSelectListener implements SelectListener
          case AVKey.VIEW_PAN:
          {
             resetOrbitView(view);
+            
             // Go some distance in the control mouse direction
             Angle heading = computePanHeading(view, controlsLayer.getPanScreenImage());
-            Angle distance = computePanAmount(this.wwd.getModel().getGlobe(), view, controlsLayer.getPanScreenImage(), panStep);
+            Angle distance = computePanAmount(this.wwd.getModel().getGlobe(), view, controlsLayer.getPanScreenImage(), PAN_STEP);
             LatLon newViewCenter = LatLon.greatCircleEndPosition(view.getCenterPosition(),
                     heading, distance);
+            
             // Turn around if passing by a pole - TODO: better handling of the pole crossing situation
             if (this.isPathCrossingAPole(newViewCenter, view.getCenterPosition()))
             {
                view.setHeading(Angle.POS180.subtract(view.getHeading()));
-            }  // Set new center pos
+            }
+
+            // Set new center pos
             view.setCenterPosition(new Position(newViewCenter, view.getCenterPosition().getElevation()));
             break;
          }
@@ -297,14 +309,14 @@ public class GazeControlsSelectListener implements SelectListener
          case AVKey.VIEW_ZOOM_IN:
          {
             resetOrbitView(view);
-            view.setZoom(computeNewZoom(view, -zoomStep));
+            view.setZoom(computeNewZoom(view, -ZOOM_STEP));
             break;
          }
          
          case AVKey.VIEW_ZOOM_OUT:
          {
             resetOrbitView(view);
-            view.setZoom(computeNewZoom(view, zoomStep));
+            view.setZoom(computeNewZoom(view, ZOOM_STEP));
             break;
          }
          
@@ -317,11 +329,19 @@ public class GazeControlsSelectListener implements SelectListener
       view.firePropertyChange(AVKey.VIEW, null, view);
    }
 
+   /**
+    * 
+    * @return 
+    */
    protected Layer getParentLayer()
    {
       return controlsLayer;
    }
 
+   /**
+    * 
+    * @param view 
+    */
    protected void resetOrbitView(OrbitView view)
    {
       if (view.getZoom() > 0)   // already in orbit view mode
@@ -329,45 +349,65 @@ public class GazeControlsSelectListener implements SelectListener
          return;
       }
 
-        // Find out where on the terrain the eye is looking at in the viewport center
+      // Find out where on the terrain the eye is looking at in the viewport center
       // TODO: if no terrain is found in the viewport center, iterate toward viewport bottom until it is found
       Vec4 centerPoint = computeSurfacePoint(view, view.getHeading(), view.getPitch());
+      
       // Reset the orbit view center point heading, pitch and zoom
       if (centerPoint != null)
       {
          Vec4 eyePoint = view.getEyePoint();
+         
          // Center pos on terrain surface
          Position centerPosition = wwd.getModel().getGlobe().computePositionFromPoint(centerPoint);
+         
          // Compute pitch and heading relative to center position
          Vec4 normal = wwd.getModel().getGlobe().computeSurfaceNormalAtLocation(centerPosition.getLatitude(),
                  centerPosition.getLongitude());
          Vec4 north = wwd.getModel().getGlobe().computeNorthPointingTangentAtLocation(centerPosition.getLatitude(),
                  centerPosition.getLongitude());
+         
          // Pitch
          view.setPitch(Angle.POS180.subtract(view.getForwardVector().angleBetween3(normal)));
+         
          // Heading
          Vec4 perpendicular = view.getForwardVector().perpendicularTo3(normal);
          Angle heading = perpendicular.angleBetween3(north);
          double direction = Math.signum(-normal.cross3(north).dot3(perpendicular));
          view.setHeading(heading.multiply(direction));
+         
          // Zoom
          view.setZoom(eyePoint.distanceTo3(centerPoint));
+         
          // Center pos
          view.setCenterPosition(centerPosition);
       }
    }
 
+   /**
+    * 
+    * @param view
+    * @param amount
+    * @return 
+    */
    protected double computeNewZoom(OrbitView view, double amount)
    {
       double coeff = 0.05;
       double change = coeff * amount;
       double logZoom = view.getZoom() != 0 ? Math.log(view.getZoom()) : 0;
-        // Zoom changes are treated as logarithmic values. This accomplishes two things:
+      
+      // Zoom changes are treated as logarithmic values. This accomplishes two things:
       // 1) Zooming is slow near the globe, and fast at great distances.
       // 2) Zooming in then immediately zooming out returns the viewer to the same zoom value.
       return Math.exp(logZoom + change);
    }
 
+   /**
+    * 
+    * @param view
+    * @param control
+    * @return 
+    */
    protected Angle computePanHeading(OrbitView view, ScreenImage control)
    {
       // Compute last pick point 'heading' relative to pan control center
@@ -381,6 +421,14 @@ public class GazeControlsSelectListener implements SelectListener
       return heading;
    }
 
+   /**
+    * 
+    * @param globe
+    * @param view
+    * @param control
+    * @param panStep
+    * @return 
+    */
    protected Angle computePanAmount(Globe globe, OrbitView view, ScreenImage control, double panStep)
    {
       // Compute last pick point distance relative to pan control center
@@ -396,7 +444,7 @@ public class GazeControlsSelectListener implements SelectListener
       double minValue = 0.5 * (180.0 / (Math.PI * radius)); // Minimum change ~0.5 meters
       double maxValue = 1.0; // Maximum change ~1 degree
 
-        // Compute an interpolated value between minValue and maxValue, using (eye altitude)/(globe radius) as
+      // Compute an interpolated value between minValue and maxValue, using (eye altitude)/(globe radius) as
       // the interpolant. Interpolation is performed on an exponential curve, to keep the value from
       // increasing too quickly as eye altitude increases.
       double a = eyePos.getElevation() / radius;
@@ -407,47 +455,38 @@ public class GazeControlsSelectListener implements SelectListener
       return Angle.fromDegrees(value * pickDistanceFactor * panStep);
    }
 
-   protected Angle computeLookHeading(OrbitView view, ScreenImage control, double headingStep)
-   {
-      // Compute last pick point 'heading' relative to look control center on x
-      Vec4 center = new Vec4(control.getScreenLocation().x, control.getScreenLocation().y, 0);
-      double px = lastPickPoint.x - center.x;
-      double pickDistanceFactor = Math.min(Math.abs(px) / 3000, 5) * Math.signum(px);
-      // New heading
-      Angle heading = view.getHeading().add(Angle.fromRadians(headingStep * pickDistanceFactor));
-      heading = heading.degrees >= 0 ? heading : heading.addDegrees(360);
-      return heading;
-   }
-
-   protected Angle computeLookPitch(OrbitView view, ScreenImage control, double pitchStep)
-   {
-      // Compute last pick point 'pitch' relative to look control center on y
-      Vec4 center = new Vec4(control.getScreenLocation().x, control.getScreenLocation().y, 0);
-      double py = lastPickPoint.y - center.y;
-      double pickDistanceFactor = Math.min(Math.abs(py) / 3000, 5) * Math.signum(py);
-      // New pitch
-      Angle pitch = view.getPitch().add(Angle.fromRadians(pitchStep * pickDistanceFactor));
-      pitch = pitch.degrees >= 0 ? (pitch.degrees <= 90 ? pitch : Angle.fromDegrees(90)) : Angle.ZERO;
-      return pitch;
-   }
-
+   /**
+    * 
+    * @param view
+    * @param heading
+    * @param pitch
+    * @return 
+    */
    protected Vec4 computeSurfacePoint(OrbitView view, Angle heading, Angle pitch)
    {
       Globe globe = wwd.getModel().getGlobe();
-        // Compute transform to be applied to north pointing Y so that it would point in the view direction
+      
+      // Compute transform to be applied to north pointing Y so that it would point in the view direction
       // Move coordinate system to view center point
       Matrix transform = globe.computeSurfaceOrientationAtPosition(view.getCenterPosition());
+      
       // Rotate so that the north pointing axes Y will point in the look at direction
       transform = transform.multiply(Matrix.fromRotationZ(heading.multiply(-1)));
       transform = transform.multiply(Matrix.fromRotationX(Angle.NEG90.add(pitch)));
+      
       // Compute forward vector
       Vec4 forward = Vec4.UNIT_Y.transformBy4(transform);
+      
       // Return intersection with terrain
       Intersection[] intersections = wwd.getSceneController().getTerrain().intersect(
               new Line(view.getEyePoint(), forward));
       return (intersections != null && intersections.length != 0) ? intersections[0].getIntersectionPoint() : null;
    }
 
+   /**
+    * 
+    * @param view 
+    */
    protected void setupFirstPersonView(OrbitView view)
    {
       if (view.getZoom() == 0)  // already in first person mode
@@ -456,26 +495,38 @@ public class GazeControlsSelectListener implements SelectListener
       }
 
       Vec4 eyePoint = view.getEyePoint();
+      
       // Center pos at eye pos
       Position centerPosition = wwd.getModel().getGlobe().computePositionFromPoint(eyePoint);
+      
       // Compute pitch and heading relative to center position
       Vec4 normal = wwd.getModel().getGlobe().computeSurfaceNormalAtLocation(centerPosition.getLatitude(),
               centerPosition.getLongitude());
       Vec4 north = wwd.getModel().getGlobe().computeNorthPointingTangentAtLocation(centerPosition.getLatitude(),
               centerPosition.getLongitude());
+      
       // Pitch
       view.setPitch(Angle.POS180.subtract(view.getForwardVector().angleBetween3(normal)));
+      
       // Heading
       Vec4 perpendicular = view.getForwardVector().perpendicularTo3(normal);
       Angle heading = perpendicular.angleBetween3(north);
       double direction = Math.signum(-normal.cross3(north).dot3(perpendicular));
       view.setHeading(heading.multiply(direction));
+      
       // Zoom
       view.setZoom(0);
+      
       // Center pos
       view.setCenterPosition(centerPosition);
    }
 
+   /**
+    * 
+    * @param p1
+    * @param p2
+    * @return 
+    */
    protected boolean isPathCrossingAPole(LatLon p1, LatLon p2)
    {
       return Math.abs(p1.getLongitude().degrees - p2.getLongitude().degrees) > 20
