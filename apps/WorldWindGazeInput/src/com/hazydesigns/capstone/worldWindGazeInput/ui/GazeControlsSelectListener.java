@@ -5,7 +5,6 @@
  */
 package com.hazydesigns.capstone.worldWindGazeInput.ui;
 
-import gov.nasa.worldwind.SceneController;
 import gov.nasa.worldwind.WorldWindow;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.avlist.AVList;
@@ -133,8 +132,8 @@ public class GazeControlsSelectListener implements SelectListener
       // This is needed every update for certain view actions
       this.lastPickPoint = event.getPickPoint();
 
-      String controlType = ((AVList) event.getTopObject()).getStringValue(AVKey.VIEW_OPERATION);
-      if (controlType == null)
+      pressedControlType = ((AVList) event.getTopObject()).getStringValue(AVKey.VIEW_OPERATION);
+      if (pressedControlType == null)
       {
          return;
       }
@@ -169,7 +168,7 @@ public class GazeControlsSelectListener implements SelectListener
                {
                   controlsLayer.highlightZoomIn();
                   zoomInPicked = true;
-                  controlType = AVKey.VIEW_ZOOM_IN;
+                  pressedControlType = AVKey.VIEW_ZOOM_IN;
                }
             }
             catch (Exception ex)
@@ -195,7 +194,7 @@ public class GazeControlsSelectListener implements SelectListener
                   {
                      controlsLayer.highlightPan();
                      panPicked = true;
-                     controlType = AVKey.VIEW_PAN;
+                     pressedControlType = AVKey.VIEW_PAN;
                   }
                }
                catch (Exception ex)
@@ -204,25 +203,59 @@ public class GazeControlsSelectListener implements SelectListener
                }
             }
          }
-
-         // If the timer hasn't been started yet, start it
-         if (mGazeDelayTimer == null)
+         
+         if (zoomInPicked == false && panPicked == false)
          {
-            mGazeDelayTimer = new Timer(GAZE_ACTIVATION_DELAY, (ActionEvent ae) ->
-            {
-               // For gaze input, treat a hover or rollover as a selection after
-               // a delay.
-               mShouldActivate = true;
+            Rectangle zoomOutScreenBounds = controlsLayer.getZoomOutScreenBounds();
+            if (zoomOutScreenBounds.contains(event.getPickPoint()))
+            {               
+               int pixelX = event.getPickPoint().x - zoomOutScreenBounds.x;
+               int pixelY = event.getPickPoint().y - zoomOutScreenBounds.y;
+               
+               try
+               {
+                  int pixelColor = controlsLayer.getZoomOutImage().getRGB(pixelX, pixelY);
+                  boolean transparent = ((pixelColor >> 24) == 0x00);
 
-               mGazeDelayTimer.stop();
-            });
-            mGazeDelayTimer.start();
+                  if (!transparent)
+                  {
+                     controlsLayer.highlightZoomOut();
+                     zoomOutPicked = true;
+                     pressedControlType = AVKey.VIEW_ZOOM_OUT;
+                  }
+               }
+               catch (Exception ex)
+               {
+                  System.out.println(ex.getMessage());
+               }
+            }
          }
-
-         // If the timer has started, then elapsed, continue button activation
-         else if (mGazeDelayTimer.isRunning() == false)
+         
+         if (panPicked || zoomInPicked || zoomOutPicked)
          {
-            mShouldActivate = true;
+            // If the timer hasn't been started yet, start it
+            if (mGazeDelayTimer == null)
+            {
+               mGazeDelayTimer = new Timer(GAZE_ACTIVATION_DELAY, (ActionEvent ae) ->
+               {
+                  // For gaze input, treat a hover or rollover as a selection after
+                  // a delay.
+                  mShouldActivate = true;
+
+                  mGazeDelayTimer.stop();
+               });
+               mGazeDelayTimer.start();
+            }
+
+            // If the timer has started, then elapsed, continue button activation
+            else if (mGazeDelayTimer.isRunning() == false)
+            {
+               mGazeDelayTimer.restart();
+            }
+         }
+         else
+         {
+            mShouldActivate = false;
          }
       }
    }
@@ -241,100 +274,46 @@ public class GazeControlsSelectListener implements SelectListener
       OrbitView view = (OrbitView) this.wwd.getView();
       view.stopAnimations();
       view.stopMovement();
-
-      if (controlType.equals(AVKey.VIEW_PAN))
+      
+      switch (controlType)
       {
-         resetOrbitView(view);
-         // Go some distance in the control mouse direction
-         Angle heading = computePanHeading(view, controlsLayer.getPanScreenImage());
-         Angle distance = computePanAmount(this.wwd.getModel().getGlobe(), view, controlsLayer.getPanScreenImage(), panStep);
-         LatLon newViewCenter = LatLon.greatCircleEndPosition(view.getCenterPosition(),
-                 heading, distance);
-         // Turn around if passing by a pole - TODO: better handling of the pole crossing situation
-         if (this.isPathCrossingAPole(newViewCenter, view.getCenterPosition()))
+         case AVKey.VIEW_PAN:
          {
-            view.setHeading(Angle.POS180.subtract(view.getHeading()));
+            resetOrbitView(view);
+            // Go some distance in the control mouse direction
+            Angle heading = computePanHeading(view, controlsLayer.getPanScreenImage());
+            Angle distance = computePanAmount(this.wwd.getModel().getGlobe(), view, controlsLayer.getPanScreenImage(), panStep);
+            LatLon newViewCenter = LatLon.greatCircleEndPosition(view.getCenterPosition(),
+                    heading, distance);
+            // Turn around if passing by a pole - TODO: better handling of the pole crossing situation
+            if (this.isPathCrossingAPole(newViewCenter, view.getCenterPosition()))
+            {
+               view.setHeading(Angle.POS180.subtract(view.getHeading()));
+            }  // Set new center pos
+            view.setCenterPosition(new Position(newViewCenter, view.getCenterPosition().getElevation()));
+            break;
          }
-         // Set new center pos
-         view.setCenterPosition(new Position(newViewCenter, view.getCenterPosition().getElevation()));
-      }
-//        else if (controlType.equals(AVKey.VIEW_LOOK))
-//        {
-//            setupFirstPersonView(view);
-//            Angle heading = computeLookHeading(view, control, headingStep);
-//            Angle pitch = computeLookPitch(view, control, pitchStep);
-//            // Check whether the view will still point at terrain
-//            Vec4 surfacePoint = computeSurfacePoint(view, heading, pitch);
-//            if (surfacePoint != null)
-//            {
-//                // Change view state
-//                final Position eyePos = view.getEyePosition();// Save current eye position
-//                view.setHeading(heading);
-//                view.setPitch(pitch);
-//                view.setZoom(0);
-//                view.setCenterPosition(eyePos); // Set center at the eye position
-//            }
-//        }
-      else if (controlType.equals(AVKey.VIEW_ZOOM_IN))
-      {
-         resetOrbitView(view);
-         view.setZoom(computeNewZoom(view, -zoomStep));
-      }
-      else if (controlType.equals(AVKey.VIEW_ZOOM_OUT))
-      {
-         resetOrbitView(view);
-         view.setZoom(computeNewZoom(view, zoomStep));
-      }
-      else if (controlType.equals(AVKey.VIEW_HEADING_LEFT))
-      {
-         resetOrbitView(view);
-         view.setHeading(view.getHeading().addDegrees(headingStep));
-      }
-      else if (controlType.equals(AVKey.VIEW_HEADING_RIGHT))
-      {
-         resetOrbitView(view);
-         view.setHeading(view.getHeading().addDegrees(-headingStep));
-      }
-      else if (controlType.equals(AVKey.VIEW_PITCH_UP))
-      {
-         resetOrbitView(view);
-         if (view.getPitch().degrees >= pitchStep)
+         
+         case AVKey.VIEW_ZOOM_IN:
          {
-            view.setPitch(view.getPitch().addDegrees(-pitchStep));
+            resetOrbitView(view);
+            view.setZoom(computeNewZoom(view, -zoomStep));
+            break;
          }
-      }
-      else if (controlType.equals(AVKey.VIEW_PITCH_DOWN))
-      {
-         resetOrbitView(view);
-         if (view.getPitch().degrees <= 90 - pitchStep)
+         
+         case AVKey.VIEW_ZOOM_OUT:
          {
-            view.setPitch(view.getPitch().addDegrees(pitchStep));
+            resetOrbitView(view);
+            view.setZoom(computeNewZoom(view, zoomStep));
+            break;
          }
-      }
-      else if (controlType.equals(AVKey.VIEW_FOV_NARROW))
-      {
-         if (view.getFieldOfView().degrees / fovStep >= 4)
+         
+         default:
          {
-            view.setFieldOfView(view.getFieldOfView().divide(fovStep));
-         }
+            break;
+         }         
       }
-      else if (controlType.equals(AVKey.VIEW_FOV_WIDE))
-      {
-         if (view.getFieldOfView().degrees * fovStep < 120)
-         {
-            view.setFieldOfView(view.getFieldOfView().multiply(fovStep));
-         }
-      }
-      else if (controlType.equals(AVKey.VERTICAL_EXAGGERATION_UP))
-      {
-         SceneController sc = this.wwd.getSceneController();
-         sc.setVerticalExaggeration(sc.getVerticalExaggeration() + this.veStep);
-      }
-      else if (controlType.equals(AVKey.VERTICAL_EXAGGERATION_DOWN))
-      {
-         SceneController sc = this.wwd.getSceneController();
-         sc.setVerticalExaggeration(Math.max(1d, sc.getVerticalExaggeration() - this.veStep));
-      }
+      
       view.firePropertyChange(AVKey.VIEW, null, view);
    }
 
@@ -396,7 +375,7 @@ public class GazeControlsSelectListener implements SelectListener
               controlsLayer.getPanScreenImage().getScreenLocation().y,
               0);
       double px = lastPickPoint.x - center.x;
-      double py = lastPickPoint.y - center.y;
+      double py = view.getViewport().getHeight() - lastPickPoint.y - center.y;
       Angle heading = view.getHeading().add(Angle.fromRadians(Math.atan2(px, py)));
       heading = heading.degrees >= 0 ? heading : heading.addDegrees(360);
       return heading;
@@ -407,7 +386,7 @@ public class GazeControlsSelectListener implements SelectListener
       // Compute last pick point distance relative to pan control center
       Vec4 center = new Vec4(control.getScreenLocation().x, control.getScreenLocation().y, 0);
       double px = lastPickPoint.x - center.x;
-      double py = lastPickPoint.y - center.y;
+      double py = view.getViewport().getHeight() - lastPickPoint.y - center.y;
       double pickDistance = Math.sqrt(px * px + py * py);
       double pickDistanceFactor = Math.min(pickDistance / 10, 5);
 

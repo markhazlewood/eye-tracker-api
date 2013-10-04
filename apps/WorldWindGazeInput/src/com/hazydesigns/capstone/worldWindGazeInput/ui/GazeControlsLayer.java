@@ -60,7 +60,7 @@ public class GazeControlsLayer extends RenderableLayer
 
       showPanControls = true;
       showZoomInControls = true;
-      showZoomOutControls = false;
+      showZoomOutControls = true;
 
       try
       {
@@ -249,6 +249,11 @@ public class GazeControlsLayer extends RenderableLayer
    public BufferedImage getZoomOutImage()
    {
       return mZoomOutImage;
+   }
+   
+   public Rectangle getZoomOutScreenBounds()
+   {
+      return mZoomOutScreenBounds;
    }
 
    public void unHighlightAll()
