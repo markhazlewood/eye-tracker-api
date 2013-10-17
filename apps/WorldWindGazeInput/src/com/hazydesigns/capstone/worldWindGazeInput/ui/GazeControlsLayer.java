@@ -36,12 +36,10 @@ public class GazeControlsLayer extends RenderableLayer
 
    protected Rectangle referenceViewport;
 
-   private final String mFullUserInterfaceImagePath = "images/ui.png";
-   private final String mPanImagePath = "images/gaze_pan.png";
-   private final String mZoomInImagePath = "images/gaze_zoomIn.png";
-   private final String mZoomOutImagePath = "images/gaze_zoomOut.png";
+   private final String mPanImagePath = "images/gaze_pan_alt.png";
+   private final String mZoomInImagePath = "images/gaze_zoomIn_alt.png";
+   private final String mZoomOutImagePath = "images/gaze_zoomOut_alt.png";
 
-   private BufferedImage mFullUserInterfaceImage = null;
    private BufferedImage mPanImage = null;
    private BufferedImage mZoomInImage = null;
    private BufferedImage mZoomOutImage = null;
@@ -64,9 +62,6 @@ public class GazeControlsLayer extends RenderableLayer
 
       try
       {
-         mFullUserInterfaceImage
-                 = ImageIO.read((InputStream) WWIO.getFileOrResourceAsStream(mFullUserInterfaceImagePath,
-                                 this.getClass()));
          mPanImage
                  = ImageIO.read((InputStream) WWIO.getFileOrResourceAsStream(mPanImagePath,
                                  this.getClass()));
@@ -220,11 +215,6 @@ public class GazeControlsLayer extends RenderableLayer
       }
 
       referenceViewport = dc.getView().getViewport();
-   }
-
-   public BufferedImage getFullUserInterfaceImage()
-   {
-      return mFullUserInterfaceImage;
    }
 
    public ScreenImage getPanScreenImage()
