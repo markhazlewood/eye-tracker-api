@@ -36,6 +36,7 @@ public class WorldWindPanel extends JPanel
    private final WorldWindow mWorldWindow;
 
    private ScreenAnnotation mCursorImage;
+   private GazeControlsLayer mGazeControlsLayer;
 
    /**
     * Creates new form WorldWindPanel
@@ -87,13 +88,18 @@ public class WorldWindPanel extends JPanel
          }
       });
       
-      GazeControlsLayer controlLayer = new GazeControlsLayer();
-      controlLayer.setName("GazeControlLayer");
-      GazeControlsSelectListener controlSelectListener = new GazeControlsSelectListener(mWorldWindow, controlLayer, mCursorImage);
+      mGazeControlsLayer = new GazeControlsLayer();
+      mGazeControlsLayer.setName("GazeControlLayer");
+      GazeControlsSelectListener controlSelectListener = new GazeControlsSelectListener(mWorldWindow, mGazeControlsLayer, mCursorImage);
       mWorldWindow.addSelectListener(controlSelectListener);
-      mWorldWindow.getModel().getLayers().add(controlLayer);
+      mWorldWindow.getModel().getLayers().add(mGazeControlsLayer);
       
       mWorldWindow.getModel().getLayers().add(cursorLayer);
+   }
+   
+   public GazeControlsLayer getGazeControlsLayer()
+   {
+       return mGazeControlsLayer;
    }
    
    private void hideCursor()

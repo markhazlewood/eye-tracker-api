@@ -30,9 +30,9 @@ public class GazeControlsLayer extends RenderableLayer
 
    private boolean initialized = false;
 
-   private boolean showPanControls = false;
-   private boolean showZoomInControls = false;
-   private boolean showZoomOutControls = false;
+   private boolean mShowPanControls = false;
+   private boolean mShowZoomInControls = false;
+   private boolean mShowZoomOutControls = false;
 
    protected Rectangle referenceViewport;
 
@@ -58,9 +58,9 @@ public class GazeControlsLayer extends RenderableLayer
    {
       super();
 
-      showPanControls = true;
-      showZoomInControls = true;
-      showZoomOutControls = true;
+      mShowPanControls = true;
+      mShowZoomInControls = true;
+      mShowZoomOutControls = true;
 
       try
       {
@@ -81,6 +81,12 @@ public class GazeControlsLayer extends RenderableLayer
       {
          ex.printStackTrace();
       }
+   }
+   
+   public void reset()
+   {
+       initialized = false;       
+       this.removeAllRenderables();
    }
 
    @Override
@@ -112,11 +118,8 @@ public class GazeControlsLayer extends RenderableLayer
          return;
       }
 
-      final String NOTEXT = "";
-      final Point ORIGIN = new Point(0, 0);
-
       // Pan
-      if (this.showPanControls)
+      if (this.mShowPanControls)
       {
          mPanScreenImage = new ScreenImage();
          mPanScreenImage.setImageSource(mPanImagePath);
@@ -127,7 +130,7 @@ public class GazeControlsLayer extends RenderableLayer
       }
 
       // Zoom in      
-      if (this.showZoomInControls)
+      if (this.mShowZoomInControls)
       {
          mZoomInScreenImage = new ScreenImage();
          mZoomInScreenImage.setImageSource(mZoomInImagePath);
@@ -138,7 +141,7 @@ public class GazeControlsLayer extends RenderableLayer
       }
 
       // Zoom out   
-      if (this.showZoomOutControls)
+      if (this.mShowZoomOutControls)
       {
          mZoomOutScreenImage = new ScreenImage();
          mZoomOutScreenImage.setImageSource(mZoomOutImagePath);
@@ -156,22 +159,25 @@ public class GazeControlsLayer extends RenderableLayer
 
    protected Object getImageSource(String control)
    {
-      if (control.equals(AVKey.VIEW_PAN))
-      {
-         return mPanImagePath;
-      }
-      else if (control.equals(AVKey.VIEW_ZOOM_IN))
-      {
-         return mZoomInImagePath;
-      }
-      else if (control.equals(AVKey.VIEW_ZOOM_OUT))
-      {
-         return mZoomOutImagePath;
-      }
-      else
-      {
-         return null;
-      }
+       switch (control) 
+       {
+           case AVKey.VIEW_PAN:
+           {
+               return mPanImagePath;
+           }
+           case AVKey.VIEW_ZOOM_IN:
+           {
+               return mZoomInImagePath;
+           }
+           case AVKey.VIEW_ZOOM_OUT:
+           {
+               return mZoomOutImagePath;
+           }
+           default:
+           {
+               return null;
+           }
+       }
    }
 
    protected void updatePositions(DrawContext dc)
@@ -186,7 +192,7 @@ public class GazeControlsLayer extends RenderableLayer
       int xOffset = 0;
       int yOffset = 0;
 
-      if (this.showPanControls)
+      if (this.mShowPanControls)
       {
          mPanScreenImage.setScreenLocation(centerLocation);
          mPanScreenBounds = new Rectangle(centerLocation.x - mPanImage.getWidth() / 2,
@@ -195,7 +201,7 @@ public class GazeControlsLayer extends RenderableLayer
                  mPanImage.getHeight());
       }
 
-      if (this.showZoomInControls)
+      if (this.mShowZoomInControls)
       {
          mZoomInScreenImage.setScreenLocation(centerLocation);
          mZoomInScreenBounds = new Rectangle(centerLocation.x - mZoomInImage.getWidth() / 2,
@@ -204,7 +210,7 @@ public class GazeControlsLayer extends RenderableLayer
                  mZoomInImage.getHeight());
       }
 
-      if (this.showZoomOutControls)
+      if (this.mShowZoomOutControls)
       {
          mZoomOutScreenImage.setScreenLocation(centerLocation);
          mZoomOutScreenBounds = new Rectangle(centerLocation.x - mZoomOutImage.getWidth() / 2,
@@ -226,6 +232,11 @@ public class GazeControlsLayer extends RenderableLayer
       return mPanScreenImage;
    }
 
+   public boolean getShowPan()
+   {
+       return mShowPanControls;
+   }
+   
    public BufferedImage getPanImage()
    {
       return mPanImage;
@@ -236,6 +247,11 @@ public class GazeControlsLayer extends RenderableLayer
       return mPanScreenBounds;
    }
 
+   public boolean getShowZoomIn()
+   {
+       return mShowZoomInControls;
+   }
+   
    public BufferedImage getZoomInImage()
    {
       return mZoomInImage;
@@ -246,6 +262,11 @@ public class GazeControlsLayer extends RenderableLayer
       return mZoomInScreenBounds;
    }
 
+   public boolean getShowZoomOut()
+   {
+       return mShowZoomOutControls;
+   }
+   
    public BufferedImage getZoomOutImage()
    {
       return mZoomOutImage;
@@ -258,15 +279,15 @@ public class GazeControlsLayer extends RenderableLayer
 
    public void unHighlightAll()
    {
-      if (showPanControls)
+      if (mShowPanControls)
       {
          mPanScreenImage.setOpacity(0.5);
       }
-      if (showZoomInControls)
+      if (mShowZoomInControls)
       {
          mZoomInScreenImage.setOpacity(0.5);
       }
-      if (showZoomOutControls)
+      if (mShowZoomOutControls)
       {
          mZoomOutScreenImage.setOpacity(0.5);
       }
@@ -286,4 +307,32 @@ public class GazeControlsLayer extends RenderableLayer
    {
       mZoomOutScreenImage.setOpacity(1);
    }
+   
+   public void setShowZoomOut(boolean show)
+   {
+       mShowZoomOutControls = show;
+       reset();
+   }
+   
+   public void setShowZoomIn(boolean show)
+   {
+       mShowZoomInControls = show;
+       reset();
+   }
+   
+   public void setShowPan(boolean show)
+   {
+       mShowPanControls = show;
+       reset();
+   }
+   
+   public void setShowZoomInZoomOutPan(boolean showZoomIn, boolean showZoomOut, boolean showPan)
+   {
+       mShowZoomInControls = showZoomIn;
+       mShowZoomOutControls = showZoomOut;
+       mShowPanControls = showPan;
+       
+       reset();
+   }
+           
 }
