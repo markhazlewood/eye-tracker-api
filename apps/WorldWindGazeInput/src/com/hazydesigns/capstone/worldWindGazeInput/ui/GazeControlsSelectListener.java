@@ -146,12 +146,6 @@ public class GazeControlsSelectListener implements SelectListener
         if (event.getEventAction().equals(SelectEvent.ROLLOVER)
                 || event.getEventAction().equals(SelectEvent.HOVER))
         {
-         // Since the UI images are all centered in the view, and overlap, the 
-            // "top" one here will always be the zoom out image. We want to actually
-            // get the correct one. The order of nestings goes, from the center: 
-            // zoom in > pan > zoom out
-            // So use that order for "pressed" precedence
-
             controlsLayer.unHighlightAll();
 
             boolean panPicked = false;
@@ -246,11 +240,14 @@ public class GazeControlsSelectListener implements SelectListener
                 {
                     mGazeDelayTimer = new Timer(GAZE_ACTIVATION_DELAY, (ActionEvent ae) ->
                     {
-                  // For gaze input, treat a hover or rollover as a selection after
+                        // For gaze input, treat a hover or rollover as a selection after
                         // a delay.
                         mShouldActivate = true;
 
-                        mGazeDelayTimer.stop();
+                        if (mGazeDelayTimer != null)
+                        {
+                            mGazeDelayTimer.stop();
+                        }
                     });
                     mGazeDelayTimer.start();
                 }
@@ -265,6 +262,10 @@ public class GazeControlsSelectListener implements SelectListener
             {
                 mShouldActivate = false;
                 controlsLayer.unHighlightAll();
+                if (mGazeDelayTimer != null && mGazeDelayTimer.isRunning())
+                {
+                    mGazeDelayTimer = null;
+                }
             }
         }
     }
