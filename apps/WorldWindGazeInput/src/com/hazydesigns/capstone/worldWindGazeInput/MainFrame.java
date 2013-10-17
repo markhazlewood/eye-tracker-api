@@ -1,12 +1,15 @@
 package com.hazydesigns.capstone.worldWindGazeInput;
 
+import com.hazydesigns.capstone.worldWindGazeInput.ui.ConfigTestDialog;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.event.SelectListener;
 import gov.nasa.worldwind.exception.WWAbsentRequirementException;
 import gov.nasa.worldwind.util.WWUtil;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import javax.swing.JButton;
@@ -34,6 +37,8 @@ public class MainFrame extends JFrame
    
    // UI stuff
    private JButton mStartSimulationButton;
+   private JButton mConfigureTestButton;
+   private ConfigTestDialog mConfigTestDialog;
    
    private static final String TEST_FILE_PATH = System.getProperty("java.io.tmpdir") + "\\simulatedEyeData.txt";
 
@@ -55,13 +60,19 @@ public class MainFrame extends JFrame
    {
       mMainViewPanel = new WorldWindPanel(mCanvasSize);
       
+      mConfigTestDialog = new ConfigTestDialog(this, true);
+      
       getContentPane().setLayout(new BorderLayout());
       getContentPane().add(mMainViewPanel, BorderLayout.CENTER);
       
       mStartSimulationButton = new JButton("Start Sim");
-      JPanel topPanel = new JPanel(new BorderLayout());
-      topPanel.add(mStartSimulationButton, BorderLayout.WEST);
+      mConfigureTestButton = new JButton("Configure Test");
+      
+      JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      topPanel.add(mStartSimulationButton);
+      topPanel.add(mConfigureTestButton);
       getContentPane().add(topPanel, BorderLayout.NORTH);
+      
       
       mStartSimulationButton.addActionListener((ActionEvent ae) ->
       {
@@ -70,6 +81,15 @@ public class MainFrame extends JFrame
          mEyeTrackerClient = new EyeTrackerClientSimulator(mGazePoint, TEST_FILE_PATH, (short)0, false);
          ((EyeTrackerClientSimulator)mEyeTrackerClient).setJitter(10);
          mEyeTrackerClient.start();
+      });
+      
+      mConfigureTestButton.addActionListener((ActionEvent e) -> 
+      {
+          mConfigTestDialog.setVisible(true);
+          
+          mMainViewPanel.getGazeControlsLayer().setShowZoomInZoomOutPan(mConfigTestDialog.getShowZoomIn(), 
+                                                                        mConfigTestDialog.getShowZoomOut(),
+                                                                        mConfigTestDialog.getShowPan());
       });
 
       // Register a rendering exception listener that's notified when exceptions occur during rendering.
