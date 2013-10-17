@@ -8,14 +8,19 @@ import gov.nasa.worldwind.WorldWindow;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import gov.nasa.worldwind.event.PositionEvent;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.layers.RenderableLayer;
 import gov.nasa.worldwind.render.AnnotationAttributes;
+import gov.nasa.worldwind.render.GlobeAnnotation;
 import gov.nasa.worldwind.render.ScreenAnnotation;
+import gov.nasa.worldwind.view.orbit.OrbitView;
+import gov.nasa.worldwind.view.orbit.OrbitViewLimits;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Toolkit;
@@ -32,11 +37,19 @@ import javax.swing.JPanel;
  */
 public class WorldWindPanel extends JPanel
 {
-
    private final WorldWindow mWorldWindow;
 
-   private ScreenAnnotation mCursorImage;
-   private GazeControlsLayer mGazeControlsLayer;
+   private final ScreenAnnotation mCursorImage;
+   private final GazeControlsLayer mGazeControlsLayer;
+   
+   private final Position[] mTestLocations = {  Position.fromDegrees(31.821363, -162.363187),
+                                                Position.fromDegrees(51.511157, -0.119940),
+                                                Position.fromDegrees(35.693862, 139.691966),
+                                                Position.fromDegrees(-15.778414, -47.961173),
+                                                Position.fromDegrees(20.769674, -156.409737),
+                                                Position.fromDegrees(40.716132, -74.012076)
+                             };
+   private final Position mStartPosition =      Position.fromDegrees(19.066909, -40.189909, 1.2756274E7);
 
    /**
     * Creates new form WorldWindPanel
@@ -95,7 +108,22 @@ public class WorldWindPanel extends JPanel
       mWorldWindow.getModel().getLayers().add(mGazeControlsLayer);
       
       mWorldWindow.getModel().getLayers().add(cursorLayer);
+      
+      setupViewLimits();      
+      setupTestLocations();
    }
+
+    private void setupViewLimits()
+    {
+        mWorldWindow.getView().setEyePosition(mStartPosition);
+        OrbitViewLimits limits = ((OrbitView)mWorldWindow.getView()).getOrbitViewLimits();
+        if (limits != null)
+        {
+            double min = mWorldWindow.getModel().getGlobe().getRadius() / 100.0;
+            double max = mWorldWindow.getModel().getGlobe().getRadius() * 2.0;
+            limits.setZoomLimits(min, max);
+        }
+    }
    
    public GazeControlsLayer getGazeControlsLayer()
    {
@@ -158,4 +186,30 @@ public class WorldWindPanel extends JPanel
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    // End of variables declaration//GEN-END:variables
+
+    private void setupTestLocations()
+    {
+        RenderableLayer locationLayer = new RenderableLayer();        
+        
+        AnnotationAttributes attr = new AnnotationAttributes();
+        attr.setAdjustWidthToText(AVKey.SIZE_FIT_TEXT);
+        attr.setBackgroundColor(Color.RED.brighter().brighter());
+        attr.setFont(Font.decode("Arial-BOLD-26"));
+        attr.setBorderWidth(2);
+        attr.setBorderColor(Color.BLACK);
+        attr.setTextColor(Color.WHITE);
+        attr.setFrameShape(AVKey.SHAPE_ELLIPSE);
+        attr.setScale(0.5);
+        attr.setLeader(AVKey.SHAPE_NONE);
+        attr.setTextAlign(AVKey.CENTER);
+        
+        for (int i = 0; i < mTestLocations.length; i++)
+        {
+            GlobeAnnotation annotation = new GlobeAnnotation(Integer.toString(i), mTestLocations[i], attr);
+            
+            locationLayer.addRenderable(annotation);
+        }
+        
+        mWorldWindow.getModel().getLayers().add(locationLayer);
+    }
 }
