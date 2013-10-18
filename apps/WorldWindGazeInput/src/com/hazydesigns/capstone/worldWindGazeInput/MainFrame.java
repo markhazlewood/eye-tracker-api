@@ -85,11 +85,16 @@ public class MainFrame extends JFrame
       
       mConfigureTestButton.addActionListener((ActionEvent e) -> 
       {
-          mConfigTestDialog.setVisible(true);
+          mConfigTestDialog.setVisible(true, 
+                                       mMainViewPanel.getGazeControlsLayer().getShowEdgePan(),
+                                       mMainViewPanel.getGazeControlsLayer().getShowCenterPan(),
+                                       mMainViewPanel.getGazeControlsLayer().getShowZoomIn(), 
+                                       mMainViewPanel.getGazeControlsLayer().getShowZoomOut());
           
           mMainViewPanel.getGazeControlsLayer().setShowZoomInZoomOutPan(mConfigTestDialog.getShowZoomIn(), 
                                                                         mConfigTestDialog.getShowZoomOut(),
-                                                                        mConfigTestDialog.getShowPan());
+                                                                        mConfigTestDialog.getShowEdgePan(),
+                                                                        mConfigTestDialog.getShowCenterPan());
       });
 
       // Register a rendering exception listener that's notified when exceptions occur during rendering.

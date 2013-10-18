@@ -152,9 +152,9 @@ public class GazeControlsSelectListener implements SelectListener
             boolean zoomInPicked = false;
             boolean zoomOutPicked = false;
 
-            if (controlsLayer.getShowPan())
+            if (controlsLayer.getShowEdgePan())
             {
-                Rectangle panScreenBounds = controlsLayer.getPanScreenBounds();
+                Rectangle panScreenBounds = controlsLayer.getEdgePanScreenBounds();
                 if (panScreenBounds.contains(event.getPickPoint()))
                 {
                     int pixelX = event.getPickPoint().x - panScreenBounds.x;
@@ -162,12 +162,38 @@ public class GazeControlsSelectListener implements SelectListener
 
                     try
                     {
-                        int pixelColor = controlsLayer.getPanImage().getRGB(pixelX, pixelY);
+                        int pixelColor = controlsLayer.getEdgePanImage().getRGB(pixelX, pixelY);
                         boolean transparent = ((pixelColor >> 24) == 0x00);
 
                         if (!transparent)
                         {
-                            controlsLayer.highlightPan();
+                            controlsLayer.highlightEdgePan();
+                            panPicked = true;
+                            pressedControlType = AVKey.VIEW_PAN;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.out.println(ex.getMessage());
+                    }
+                }
+            }
+            else if (controlsLayer.getShowCenterPan())
+            {
+                Rectangle panScreenBounds = controlsLayer.getCenterPanScreenBounds();
+                if (panScreenBounds.contains(event.getPickPoint()))
+                {
+                    int pixelX = event.getPickPoint().x - panScreenBounds.x;
+                    int pixelY = event.getPickPoint().y - panScreenBounds.y;
+
+                    try
+                    {
+                        int pixelColor = controlsLayer.getCenterPanImage().getRGB(pixelX, pixelY);
+                        boolean transparent = ((pixelColor >> 24) == 0x00);
+
+                        if (!transparent)
+                        {
+                            controlsLayer.highlightCenterPan();
                             panPicked = true;
                             pressedControlType = AVKey.VIEW_PAN;
                         }
@@ -262,10 +288,6 @@ public class GazeControlsSelectListener implements SelectListener
             {
                 mShouldActivate = false;
                 controlsLayer.unHighlightAll();
-                if (mGazeDelayTimer != null && mGazeDelayTimer.isRunning())
-                {
-                    mGazeDelayTimer = null;
-                }
             }
         }
     }
@@ -295,20 +317,40 @@ public class GazeControlsSelectListener implements SelectListener
             {
                 resetOrbitView(view);
 
-                // Go some distance in the control mouse direction
-                Angle heading = computePanHeading(view, controlsLayer.getPanScreenImage());
-                Angle distance = computePanAmount(this.wwd.getModel().getGlobe(), view, controlsLayer.getPanScreenImage(), PAN_STEP);
-                LatLon newViewCenter = LatLon.greatCircleEndPosition(view.getCenterPosition(),
-                        heading, distance);
-
-                // Turn around if passing by a pole - TODO: better handling of the pole crossing situation
-                if (this.isPathCrossingAPole(newViewCenter, view.getCenterPosition()))
+                if (controlsLayer.getShowEdgePan())
                 {
-                    view.setHeading(Angle.POS180.subtract(view.getHeading()));
-                }
+                  // Go some distance in the control mouse direction
+                  Angle heading = computePanHeading(view, controlsLayer.getEdgePanScreenImage());
+                  Angle distance = computePanAmount(this.wwd.getModel().getGlobe(), view, controlsLayer.getEdgePanScreenImage(), PAN_STEP);
+                  LatLon newViewCenter = LatLon.greatCircleEndPosition(view.getCenterPosition(),
+                          heading, distance);
 
-                // Set new center pos
-                view.setCenterPosition(new Position(newViewCenter, view.getCenterPosition().getElevation()));
+                  // Turn around if passing by a pole - TODO: better handling of the pole crossing situation
+                  if (this.isPathCrossingAPole(newViewCenter, view.getCenterPosition()))
+                  {
+                      view.setHeading(Angle.POS180.subtract(view.getHeading()));
+                  }
+
+                  // Set new center pos
+                  view.setCenterPosition(new Position(newViewCenter, view.getCenterPosition().getElevation()));
+                }
+                else if (controlsLayer.getShowCenterPan())
+                {
+                   // Go some distance in the control mouse direction
+                  Angle heading = computePanHeading(view, controlsLayer.getCenterPanScreenImage());
+                  Angle distance = computePanAmount(this.wwd.getModel().getGlobe(), view, controlsLayer.getCenterPanScreenImage(), PAN_STEP);
+                  LatLon newViewCenter = LatLon.greatCircleEndPosition(view.getCenterPosition(),
+                          heading, distance);
+
+                  // Turn around if passing by a pole - TODO: better handling of the pole crossing situation
+                  if (this.isPathCrossingAPole(newViewCenter, view.getCenterPosition()))
+                  {
+                      view.setHeading(Angle.POS180.subtract(view.getHeading()));
+                  }
+
+                  // Set new center pos
+                  view.setCenterPosition(new Position(newViewCenter, view.getCenterPosition().getElevation()));
+                }
                 break;
             }
 
@@ -417,9 +459,19 @@ public class GazeControlsSelectListener implements SelectListener
     protected Angle computePanHeading(OrbitView view, ScreenImage control)
     {
         // Compute last pick point 'heading' relative to pan control center
-        Vec4 center = new Vec4(controlsLayer.getPanScreenImage().getScreenLocation().x,
-                controlsLayer.getPanScreenImage().getScreenLocation().y,
-                0);
+        Vec4 center = Vec4.ONE;
+        if (controlsLayer.getShowEdgePan())
+        {
+            center = new Vec4( controlsLayer.getEdgePanScreenImage().getScreenLocation().x,
+                              controlsLayer.getEdgePanScreenImage().getScreenLocation().y,
+                              0);
+        }
+        else if (controlsLayer.getShowCenterPan())
+        {
+           center = new Vec4( controlsLayer.getCenterPanScreenImage().getScreenLocation().x,
+                              controlsLayer.getCenterPanScreenImage().getScreenLocation().y,
+                              0);
+        }
         double px = lastPickPoint.x - center.x;
         double py = view.getViewport().getHeight() - lastPickPoint.y - center.y;
         Angle heading = view.getHeading().add(Angle.fromRadians(Math.atan2(px, py)));
