@@ -30,25 +30,30 @@ public class GazeControlsLayer extends RenderableLayer
 
    private boolean initialized = false;
 
-   private boolean mShowPanControls = false;
+   private boolean mShowEdgePanControls = false;
+   private boolean mShowCenterPanControls = false;
    private boolean mShowZoomInControls = false;
    private boolean mShowZoomOutControls = false;
 
    protected Rectangle referenceViewport;
 
-   private final String mPanImagePath = "images/gaze_pan_alt.png";
+   private final String mEdgePanImagePath = "images/gaze_pan_alt.png";
+   private final String mCenterPanImagePath = "images/gaze_pan.png";
    private final String mZoomInImagePath = "images/gaze_zoomIn_alt.png";
    private final String mZoomOutImagePath = "images/gaze_zoomOut_alt.png";
 
-   private BufferedImage mPanImage = null;
+   private BufferedImage mEdgePanImage = null;
+   private BufferedImage mCenterPanImage = null;
    private BufferedImage mZoomInImage = null;
    private BufferedImage mZoomOutImage = null;
 
-   private ScreenImage mPanScreenImage;
+   private ScreenImage mEdgePanScreenImage;
+   private ScreenImage mCenterPanScreenImage;
    private ScreenImage mZoomInScreenImage;
    private ScreenImage mZoomOutScreenImage;
 
-   private Rectangle mPanScreenBounds;
+   private Rectangle mEdgePanScreenBounds;
+   private Rectangle mCenterPanScreenBounds;
    private Rectangle mZoomInScreenBounds;
    private Rectangle mZoomOutScreenBounds;
 
@@ -56,14 +61,18 @@ public class GazeControlsLayer extends RenderableLayer
    {
       super();
 
-      mShowPanControls = true;
-      mShowZoomInControls = true;
-      mShowZoomOutControls = true;
+      mShowEdgePanControls = false;
+      mShowCenterPanControls = false;
+      mShowZoomInControls = false;
+      mShowZoomOutControls = false;
 
       try
       {
-         mPanImage
-                 = ImageIO.read((InputStream) WWIO.getFileOrResourceAsStream(mPanImagePath,
+         mEdgePanImage
+                 = ImageIO.read((InputStream) WWIO.getFileOrResourceAsStream(mEdgePanImagePath,
+                                 this.getClass()));
+         mCenterPanImage
+                 = ImageIO.read((InputStream) WWIO.getFileOrResourceAsStream(mCenterPanImagePath,
                                  this.getClass()));
          mZoomInImage
                  = ImageIO.read((InputStream) WWIO.getFileOrResourceAsStream(mZoomInImagePath,
@@ -113,15 +122,26 @@ public class GazeControlsLayer extends RenderableLayer
          return;
       }
 
-      // Pan
-      if (this.mShowPanControls)
+      // Edge Pan
+      if (this.mShowEdgePanControls)
       {
-         mPanScreenImage = new ScreenImage();
-         mPanScreenImage.setImageSource(mPanImagePath);
-         mPanScreenImage.setValue(AVKey.VIEW_OPERATION, AVKey.VIEW_PAN);
-         mPanScreenImage.setOpacity(0.5);
+         mEdgePanScreenImage = new ScreenImage();
+         mEdgePanScreenImage.setImageSource(mEdgePanImagePath);
+         mEdgePanScreenImage.setValue(AVKey.VIEW_OPERATION, AVKey.VIEW_PAN);
+         mEdgePanScreenImage.setOpacity(0.5);
 
-         this.addRenderable(mPanScreenImage);
+         this.addRenderable(mEdgePanScreenImage);
+      }
+      
+      // Center Pan
+      if (this.mShowCenterPanControls)
+      {
+         mCenterPanScreenImage = new ScreenImage();
+         mCenterPanScreenImage.setImageSource(mCenterPanImagePath);
+         mCenterPanScreenImage.setValue(AVKey.VIEW_OPERATION, AVKey.VIEW_PAN);
+         mCenterPanScreenImage.setOpacity(0.5);
+
+         this.addRenderable(mCenterPanScreenImage);
       }
 
       // Zoom in      
@@ -158,7 +178,14 @@ public class GazeControlsLayer extends RenderableLayer
        {
            case AVKey.VIEW_PAN:
            {
-               return mPanImagePath;
+              if (mShowEdgePanControls)
+              {
+                  return mEdgePanImagePath;
+              }
+              else
+              {
+                 return mCenterPanImagePath;
+              }
            }
            case AVKey.VIEW_ZOOM_IN:
            {
@@ -187,16 +214,24 @@ public class GazeControlsLayer extends RenderableLayer
       int xOffset = 0;
       int yOffset = 0;
 
-      if (this.mShowPanControls)
+      if (mShowEdgePanControls)
       {
-         mPanScreenImage.setScreenLocation(centerLocation);
-         mPanScreenBounds = new Rectangle(centerLocation.x - mPanImage.getWidth() / 2,
-                 centerLocation.y - mPanImage.getHeight() / 2,
-                 mPanImage.getWidth(),
-                 mPanImage.getHeight());
+         mEdgePanScreenImage.setScreenLocation(centerLocation);
+         mEdgePanScreenBounds = new Rectangle(centerLocation.x - mEdgePanImage.getWidth() / 2,
+                 centerLocation.y - mEdgePanImage.getHeight() / 2,
+                 mEdgePanImage.getWidth(),
+                 mEdgePanImage.getHeight());
+      }
+      else if (mShowCenterPanControls)
+      {
+         mCenterPanScreenImage.setScreenLocation(centerLocation);
+         mCenterPanScreenBounds = new Rectangle(centerLocation.x - mCenterPanImage.getWidth() / 2,
+                 centerLocation.y - mCenterPanImage.getHeight() / 2,
+                 mCenterPanImage.getWidth(),
+                 mCenterPanImage.getHeight());
       }
 
-      if (this.mShowZoomInControls)
+      if (mShowZoomInControls)
       {
          mZoomInScreenImage.setScreenLocation(centerLocation);
          mZoomInScreenBounds = new Rectangle(centerLocation.x - mZoomInImage.getWidth() / 2,
@@ -205,7 +240,7 @@ public class GazeControlsLayer extends RenderableLayer
                  mZoomInImage.getHeight());
       }
 
-      if (this.mShowZoomOutControls)
+      if (mShowZoomOutControls)
       {
          mZoomOutScreenImage.setScreenLocation(centerLocation);
          mZoomOutScreenBounds = new Rectangle(centerLocation.x - mZoomOutImage.getWidth() / 2,
@@ -217,24 +252,44 @@ public class GazeControlsLayer extends RenderableLayer
       referenceViewport = dc.getView().getViewport();
    }
 
-   public ScreenImage getPanScreenImage()
+   public ScreenImage getEdgePanScreenImage()
    {
-      return mPanScreenImage;
+      return mEdgePanScreenImage;
    }
 
-   public boolean getShowPan()
+   public boolean getShowEdgePan()
    {
-       return mShowPanControls;
+       return mShowEdgePanControls;
    }
    
-   public BufferedImage getPanImage()
+   public BufferedImage getEdgePanImage()
    {
-      return mPanImage;
+      return mEdgePanImage;
    }
 
-   public Rectangle getPanScreenBounds()
+   public Rectangle getEdgePanScreenBounds()
    {
-      return mPanScreenBounds;
+      return mEdgePanScreenBounds;
+   }
+   
+   public ScreenImage getCenterPanScreenImage()
+   {
+      return mCenterPanScreenImage;
+   }
+
+   public boolean getShowCenterPan()
+   {
+       return mShowCenterPanControls;
+   }
+   
+   public BufferedImage getCenterPanImage()
+   {
+      return mCenterPanImage;
+   }
+
+   public Rectangle getCenterPanScreenBounds()
+   {
+      return mCenterPanScreenBounds;
    }
 
    public boolean getShowZoomIn()
@@ -269,9 +324,19 @@ public class GazeControlsLayer extends RenderableLayer
 
    public void unHighlightAll()
    {
-      if (mShowPanControls)
+      if (mShowEdgePanControls)
       {
-         mPanScreenImage.setOpacity(0.5);
+         if (mEdgePanScreenImage != null)
+         {
+            mEdgePanScreenImage.setOpacity(0.5);
+         }
+      }
+      else if (mShowCenterPanControls)
+      {
+         if (mCenterPanScreenImage != null)
+         {
+            mCenterPanScreenImage.setOpacity(0.5);
+         }
       }
       if (mShowZoomInControls)
       {
@@ -283,9 +348,14 @@ public class GazeControlsLayer extends RenderableLayer
       }
    }
 
-   public void highlightPan()
+   public void highlightEdgePan()
    {
-      mPanScreenImage.setOpacity(1);
+      mEdgePanScreenImage.setOpacity(1);
+   }
+   
+   public void highlightCenterPan()
+   {
+      mCenterPanScreenImage.setOpacity(1);
    }
 
    public void highlightZoomIn()
@@ -310,17 +380,24 @@ public class GazeControlsLayer extends RenderableLayer
        reset();
    }
    
-   public void setShowPan(boolean show)
+   public void setShowEdgePan(boolean show)
    {
-       mShowPanControls = show;
+       mShowEdgePanControls = show;
        reset();
    }
    
-   public void setShowZoomInZoomOutPan(boolean showZoomIn, boolean showZoomOut, boolean showPan)
+   public void setShowCenterPan(boolean show)
+   {
+      mShowCenterPanControls = show;
+      reset();
+   }
+   
+   public void setShowZoomInZoomOutPan(boolean showZoomIn, boolean showZoomOut, boolean showEdgePan, boolean showCenterPan)
    {
        mShowZoomInControls = showZoomIn;
        mShowZoomOutControls = showZoomOut;
-       mShowPanControls = showPan;
+       mShowEdgePanControls = showEdgePan;
+       mShowCenterPanControls = showCenterPan;
        
        reset();
    }
