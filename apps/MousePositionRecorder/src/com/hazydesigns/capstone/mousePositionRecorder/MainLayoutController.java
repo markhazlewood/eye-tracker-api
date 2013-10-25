@@ -53,7 +53,7 @@ public class MainLayoutController implements Initializable
    private ArrayList<String> mTextLines;
    
    private static final String TEST_FILE_PATH = System.getProperty("java.io.tmpdir") + "\\simulatedEyeData.txt";
-   private static final int SAMPLE_DELAY_milliseconds = 100;
+   private static final int SAMPLE_DELAY_milliseconds = 10;
 
    @Override
    public void initialize(URL url, ResourceBundle rb)
