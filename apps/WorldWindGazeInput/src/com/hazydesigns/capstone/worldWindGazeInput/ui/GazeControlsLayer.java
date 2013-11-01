@@ -61,10 +61,10 @@ public class GazeControlsLayer extends RenderableLayer
    {
       super();
 
-      mShowEdgePanControls = false;
+      mShowEdgePanControls = true;
       mShowCenterPanControls = false;
-      mShowZoomInControls = false;
-      mShowZoomOutControls = false;
+      mShowZoomInControls = true;
+      mShowZoomOutControls = true;
 
       try
       {

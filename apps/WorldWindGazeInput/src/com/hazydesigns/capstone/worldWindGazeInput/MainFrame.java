@@ -8,16 +8,16 @@ import gov.nasa.worldwind.util.WWUtil;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import rit.eyeTrackingAPI.DataConstructs.GazePoint;
-import rit.eyeTrackingAPI.EyeTrackerUtilities.eyeTrackerClients.EyeTrackerClientSimulator;
+import rit.eyeTrackingAPI.EyeTrackerUtilities.eyeTrackerClients.IViewXClient;
 import rit.eyeTrackingAPI.SmoothingFilters.PassthroughFilter;
 
 /**
@@ -32,7 +32,8 @@ public class MainFrame extends JFrame
    // Eye tracker connection stuff
    private GazePoint mGazePoint;
    private PassthroughFilter mSmoothingFilter;
-   private EyeTrackerClientSimulator mEyeTrackerClient;
+   //private EyeTrackerClientSimulator mEyeTrackerClient;
+   private IViewXClient mEyeTrackerClient;
    private EyeTrackerListener mEyeTrackerListener;
    
    // UI stuff
@@ -40,7 +41,11 @@ public class MainFrame extends JFrame
    private JButton mConfigureTestButton;
    private ConfigTestDialog mConfigTestDialog;
    
+   private MyKeyListener mKeyListener = new MyKeyListener();
+   private boolean mConnectedToEyeTracker = false;
+   
    private static final String TEST_FILE_PATH = System.getProperty("java.io.tmpdir") + "\\simulatedEyeData.txt";
+    private boolean mFullscreen = false;
 
    /**
     * Creates new form MainFrame
@@ -65,22 +70,18 @@ public class MainFrame extends JFrame
       getContentPane().setLayout(new BorderLayout());
       getContentPane().add(mMainViewPanel, BorderLayout.CENTER);
       
-      mStartSimulationButton = new JButton("Start Sim");
+      mStartSimulationButton = new JButton("Connect");
       mConfigureTestButton = new JButton("Configure Test");
       
       JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
       topPanel.add(mStartSimulationButton);
       topPanel.add(mConfigureTestButton);
-      getContentPane().add(topPanel, BorderLayout.NORTH);
+      //getContentPane().add(topPanel, BorderLayout.NORTH);
       
       
       mStartSimulationButton.addActionListener((ActionEvent ae) ->
       {
-         mEyeTrackerListener.start();
-         
-         mEyeTrackerClient = new EyeTrackerClientSimulator(mGazePoint, TEST_FILE_PATH, (short)0, false);
-         ((EyeTrackerClientSimulator)mEyeTrackerClient).setJitter(10);
-         mEyeTrackerClient.start();
+          toggleConnection();
       });
       
       mConfigureTestButton.addActionListener((ActionEvent e) -> 
@@ -128,12 +129,92 @@ public class MainFrame extends JFrame
          mMainViewPanel.getWorldWindow().addSelectListener((SelectListener) layer);
       });
       
+      mMainViewPanel.addKeyListener(mKeyListener);
+      addKeyListener(mKeyListener);
+      mMainViewPanel.getWorldWindow().getInputHandler().addKeyListener(mKeyListener);
+      
+       setExtendedState(JFrame.MAXIMIZED_BOTH);
+      
       this.pack();
 
       // Center the application on the screen.
       WWUtil.alignComponent(null, this, AVKey.CENTER);
       this.setResizable(true);
    }
+   
+   private void toggleConnection() 
+    {
+       if (!mConnectedToEyeTracker)
+        {
+          mEyeTrackerListener.start();
+
+          mEyeTrackerClient = new IViewXClient(mGazePoint, "129.21.175.1");
+
+          //mEyeTrackerClient = new EyeTrackerClientSimulator(mGazePoint, TEST_FILE_PATH, (short)0, false);
+          //((EyeTrackerClientSimulator)mEyeTrackerClient).setJitter(10);
+          mEyeTrackerClient.connect();
+          mEyeTrackerClient.start();
+          
+          mStartSimulationButton.setText("Disconnect");
+          
+          mConnectedToEyeTracker = true;
+        }
+          else
+        {
+            mEyeTrackerListener.stop();
+
+            mEyeTrackerClient.requestStop();
+            mEyeTrackerClient = null;
+            
+            mStartSimulationButton.setText("Connect");
+            
+            mConnectedToEyeTracker = false;
+        }
+            
+    }
+   
+   private class MyKeyListener implements KeyListener
+   {
+       @Override
+          public void keyTyped(KeyEvent e) 
+          {
+             if (e.getKeyCode() == KeyEvent.VK_F || e.getKeyChar() == 'f')
+              {
+                  toggleFullscreen();
+              }
+             
+             else if (e.getKeyCode() == KeyEvent.VK_C || e.getKeyChar() == 'c')
+              {
+                  toggleConnection();
+              }
+          }
+
+          @Override
+          public void keyPressed(KeyEvent e) 
+          {
+          }
+
+          @Override
+          public void keyReleased(KeyEvent e) 
+          {
+          }
+
+        
+   }
+   
+   private void toggleFullscreen() 
+    {
+        if (!mFullscreen)
+        {
+            GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(this);
+            mFullscreen = true;
+        }
+        else
+        {
+           GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(null);
+           mFullscreen = false;
+        }
+    }
 
    /**
     * This method is called from within the constructor to initialize the form.
