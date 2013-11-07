@@ -1,6 +1,7 @@
 package com.hazydesigns.capstone.worldWindGazeInput;
 
 import com.hazydesigns.capstone.worldWindGazeInput.ui.ConfigTestDialog;
+import com.hazydesigns.capstone.worldWindGazeInput.ui.NewParticipantDialog;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.event.SelectListener;
 import gov.nasa.worldwind.exception.WWAbsentRequirementException;
@@ -28,24 +29,29 @@ public class MainFrame extends JFrame
 {
    private final Dimension mCanvasSize = new Dimension(800, 600);
    private WorldWindPanel mMainViewPanel;
-   
+
    // Eye tracker connection stuff
    private GazePoint mGazePoint;
    private PassthroughFilter mSmoothingFilter;
    //private EyeTrackerClientSimulator mEyeTrackerClient;
    private IViewXClient mEyeTrackerClient;
    private EyeTrackerListener mEyeTrackerListener;
-   
+
    // UI stuff
    private JButton mStartSimulationButton;
    private JButton mConfigureTestButton;
    private ConfigTestDialog mConfigTestDialog;
-   
+
    private MyKeyListener mKeyListener = new MyKeyListener();
    private boolean mConnectedToEyeTracker = false;
-   
+
    private static final String TEST_FILE_PATH = System.getProperty("java.io.tmpdir") + "\\simulatedEyeData.txt";
-    private boolean mFullscreen = false;
+   private boolean mFullscreen = false;
+   
+   private JButton mNewParticipantButton;
+   private NewParticipantDialog mNewParticipantDialog;
+   private int mCurrentParticipantNumber = 0;
+   private String mParticipantRecordPath = "";
 
    /**
     * Creates new form MainFrame
@@ -54,48 +60,58 @@ public class MainFrame extends JFrame
    {
       mSmoothingFilter = new PassthroughFilter();
       mGazePoint = new GazePoint(mSmoothingFilter);
-      
+
       mEyeTrackerListener = new EyeTrackerListener(mSmoothingFilter, null, false, 0);
    }
-   
+
    /**
-    * 
+    *
     */
    private void initialize()
    {
       mMainViewPanel = new WorldWindPanel(mCanvasSize);
-      
+
       mConfigTestDialog = new ConfigTestDialog(this, true);
-      
+      mNewParticipantDialog = new NewParticipantDialog(this, true);
+
       getContentPane().setLayout(new BorderLayout());
       getContentPane().add(mMainViewPanel, BorderLayout.CENTER);
-      
+
       mStartSimulationButton = new JButton("Connect");
-      mConfigureTestButton = new JButton("Configure Test");
-      
+      mConfigureTestButton = new JButton("Configure UI");
+      mNewParticipantButton = new JButton("New Participant");
+
       JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
       topPanel.add(mStartSimulationButton);
       topPanel.add(mConfigureTestButton);
-      //getContentPane().add(topPanel, BorderLayout.NORTH);
-      
-      
+      topPanel.add(mNewParticipantButton);
+      getContentPane().add(topPanel, BorderLayout.NORTH);
+
       mStartSimulationButton.addActionListener((ActionEvent ae) ->
       {
-          toggleConnection();
+         toggleConnection();
+      });
+
+      mConfigureTestButton.addActionListener((ActionEvent e) ->
+      {
+         mConfigTestDialog.setVisible(true,
+                                      mMainViewPanel.getGazeControlsLayer().getShowEdgePan(),
+                                      mMainViewPanel.getGazeControlsLayer().getShowCenterPan(),
+                                      mMainViewPanel.getGazeControlsLayer().getShowZoomIn(),
+                                      mMainViewPanel.getGazeControlsLayer().getShowZoomOut());
+
+         mMainViewPanel.getGazeControlsLayer().setShowZoomInZoomOutPan(mConfigTestDialog.getShowZoomIn(),
+                                                                       mConfigTestDialog.getShowZoomOut(),
+                                                                       mConfigTestDialog.getShowEdgePan(),
+                                                                       mConfigTestDialog.getShowCenterPan());
       });
       
-      mConfigureTestButton.addActionListener((ActionEvent e) -> 
+      mNewParticipantButton.addActionListener((ActionEvent e) ->
       {
-          mConfigTestDialog.setVisible(true, 
-                                       mMainViewPanel.getGazeControlsLayer().getShowEdgePan(),
-                                       mMainViewPanel.getGazeControlsLayer().getShowCenterPan(),
-                                       mMainViewPanel.getGazeControlsLayer().getShowZoomIn(), 
-                                       mMainViewPanel.getGazeControlsLayer().getShowZoomOut());
-          
-          mMainViewPanel.getGazeControlsLayer().setShowZoomInZoomOutPan(mConfigTestDialog.getShowZoomIn(), 
-                                                                        mConfigTestDialog.getShowZoomOut(),
-                                                                        mConfigTestDialog.getShowEdgePan(),
-                                                                        mConfigTestDialog.getShowCenterPan());
+         mNewParticipantDialog.show(mParticipantRecordPath, mCurrentParticipantNumber);
+         
+         mParticipantRecordPath = mNewParticipantDialog.getRecordPath();
+         mCurrentParticipantNumber = mNewParticipantDialog.getParticipantNumber();
       });
 
       // Register a rendering exception listener that's notified when exceptions occur during rendering.
@@ -107,9 +123,9 @@ public class MainFrame extends JFrame
             message += "Please install up-to-date graphics driver and try again.\n";
             message += "Reason: " + t.getMessage() + "\n";
             message += "This program will end when you press OK.";
-            
+
             JOptionPane.showMessageDialog(MainFrame.this, message, "Unable to Start Program",
-                    JOptionPane.ERROR_MESSAGE);
+                                          JOptionPane.ERROR_MESSAGE);
             System.exit(-1);
          }
       });
@@ -117,104 +133,102 @@ public class MainFrame extends JFrame
       // Search the layer list for layers that are also select listeners and register them with the World
       // Window. This enables interactive layers to be included without specific knowledge of them here.
       /*for (Layer layer : mMainViewPanel.getWorldWindow().getModel().getLayers())
-      {
-         if (layer instanceof SelectListener)
-         {
-            mMainViewPanel.getWorldWindow().addSelectListener((SelectListener) layer);
-         }
-      }*/
-      
+       {
+       if (layer instanceof SelectListener)
+       {
+       mMainViewPanel.getWorldWindow().addSelectListener((SelectListener) layer);
+       }
+       }*/
       mMainViewPanel.getWorldWindow().getModel().getLayers().stream().filter((layer) -> (layer instanceof SelectListener)).forEach((layer) ->
       {
          mMainViewPanel.getWorldWindow().addSelectListener((SelectListener) layer);
       });
-      
+
       mMainViewPanel.addKeyListener(mKeyListener);
       addKeyListener(mKeyListener);
       mMainViewPanel.getWorldWindow().getInputHandler().addKeyListener(mKeyListener);
-      
-       setExtendedState(JFrame.MAXIMIZED_BOTH);
-      
+
+      setExtendedState(JFrame.MAXIMIZED_BOTH);
+
       this.pack();
 
       // Center the application on the screen.
       WWUtil.alignComponent(null, this, AVKey.CENTER);
       this.setResizable(true);
    }
-   
-   private void toggleConnection() 
-    {
-       if (!mConnectedToEyeTracker)
-        {
-          mEyeTrackerListener.start();
 
-          mEyeTrackerClient = new IViewXClient(mGazePoint, "129.21.175.1");
+   private void toggleConnection()
+   {
+      if (!mConnectedToEyeTracker)
+      {
+         mEyeTrackerListener.start();
+
+         mEyeTrackerClient = new IViewXClient(mGazePoint, "129.21.175.1");
 
           //mEyeTrackerClient = new EyeTrackerClientSimulator(mGazePoint, TEST_FILE_PATH, (short)0, false);
-          //((EyeTrackerClientSimulator)mEyeTrackerClient).setJitter(10);
-          mEyeTrackerClient.connect();
-          mEyeTrackerClient.start();
-          
-          mStartSimulationButton.setText("Disconnect");
-          
-          mConnectedToEyeTracker = true;
-        }
-          else
-        {
-            mEyeTrackerListener.stop();
+         //((EyeTrackerClientSimulator)mEyeTrackerClient).setJitter(10);
+         mEyeTrackerClient.connect();
+         mEyeTrackerClient.start();
 
-            mEyeTrackerClient.requestStop();
-            mEyeTrackerClient = null;
-            
-            mStartSimulationButton.setText("Connect");
-            
-            mConnectedToEyeTracker = false;
-        }
-            
-    }
-   
+         mStartSimulationButton.setText("Disconnect");
+
+         mConnectedToEyeTracker = true;
+      }
+      else
+      {
+         mEyeTrackerListener.stop();
+
+         mEyeTrackerClient.requestStop();
+         mEyeTrackerClient = null;
+
+         mStartSimulationButton.setText("Connect");
+
+         mConnectedToEyeTracker = false;
+      }
+
+   }
+
    private class MyKeyListener implements KeyListener
    {
-       @Override
-          public void keyTyped(KeyEvent e) 
-          {
-             if (e.getKeyCode() == KeyEvent.VK_F || e.getKeyChar() == 'f')
-              {
-                  toggleFullscreen();
-              }
-             
-             else if (e.getKeyCode() == KeyEvent.VK_C || e.getKeyChar() == 'c')
-              {
-                  toggleConnection();
-              }
-          }
+      @Override
+      public void keyTyped(KeyEvent e)
+      {
+         if (e.getKeyCode() == KeyEvent.VK_F || e.getKeyChar() == 'f')
+         {
+            toggleFullscreen();
+         }
 
-          @Override
-          public void keyPressed(KeyEvent e) 
-          {
-          }
+         else if (e.getKeyCode() == KeyEvent.VK_C || e.getKeyChar() == 'c')
+         {
+            toggleConnection();
+         }
+      }
 
-          @Override
-          public void keyReleased(KeyEvent e) 
-          {
-          }
+      @Override
+      public void keyPressed(KeyEvent e)
+      {
+      }
 
-        
+      @Override
+      public void keyReleased(KeyEvent e)
+      {
+      }
+
    }
-   
-   private void toggleFullscreen() 
-    {
-        if (!mFullscreen)
-        {
-            GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(this);
-            mFullscreen = true;
-        }
-        else
-        {
-           GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(null);
-           mFullscreen = false;
-        }
-    }
+
+   private void toggleFullscreen()
+   {
+      if (!mFullscreen)
+      {
+         GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(this);
+         mFullscreen = true;
+      }
+      else
+      {
+         GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(null);
+         mFullscreen = false;
+      }
+   }
 
    /**
     * This method is called from within the constructor to initialize the form.
@@ -244,7 +258,7 @@ public class MainFrame extends JFrame
 
    /**
     * Application entry point.
-    * 
+    *
     * @param args the command line arguments
     */
    public static void main(String args[])
@@ -289,7 +303,7 @@ public class MainFrame extends JFrame
          MainFrame main = new MainFrame();
          main.setTitle("World Wind Gaze Input");
          main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-         
+
          main.initialize();
          main.setVisible(true);
       });
@@ -297,6 +311,4 @@ public class MainFrame extends JFrame
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    // End of variables declaration//GEN-END:variables
-
-   
 }
