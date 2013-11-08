@@ -119,12 +119,14 @@ public class MainFrame extends JFrame
         mStartTaskButton = new JButton("Start Task");
         mEndTaskButton = new JButton("End Task");
         mNextTaskButton = new JButton("Next Task");
+        JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
+        separator.setPreferredSize(new Dimension(10, 20));
 
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         topPanel.add(mStartSimulationButton);
         topPanel.add(mConfigureTestButton);
         topPanel.add(mNewParticipantButton);
-        topPanel.add(new JSeparator(SwingConstants.VERTICAL));
+        topPanel.add(separator);
         topPanel.add(mStartTaskButton);
         topPanel.add(mEndTaskButton);
         topPanel.add(mNextTaskButton);

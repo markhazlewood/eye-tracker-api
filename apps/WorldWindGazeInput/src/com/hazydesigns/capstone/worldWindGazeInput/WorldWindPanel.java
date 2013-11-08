@@ -205,10 +205,12 @@ public class WorldWindPanel extends JPanel
    private void setupTestPoints()
    {
       RenderableLayer locationLayer = new RenderableLayer();
+      
+      String[] pointLabels = { "Z", "A", "B", "C", "D", "E" };
 
       for (int i = 0; i < mTestLocations.length; i++)
       {
-         TestPoint point = new TestPoint("" + i,
+         TestPoint point = new TestPoint(pointLabels[i],
                                          mTestLocations[i],
                                          new Position[]
                                           {
