@@ -35,7 +35,6 @@ import rit.eyeTrackingAPI.SmoothingFilters.PassthroughFilter;
  */
 public class MainFrame extends JFrame
 {
-
     private final Dimension mCanvasSize = new Dimension(800, 600);
     private WorldWindPanel mMainViewPanel;
 
@@ -280,6 +279,8 @@ public class MainFrame extends JFrame
 
     private void startTask()
     {
+       mMainViewPanel.resetViewToStart();
+       
         ++mCurrentTaskNumber;
         mStartTaskTime = System.currentTimeMillis();
 

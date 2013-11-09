@@ -131,7 +131,7 @@ public class WorldWindPanel extends JPanel
 
    private void setupViewLimits()
    {
-      mWorldWindow.getView().setEyePosition(mStartPosition);
+      resetViewToStart();
       OrbitViewLimits limits = ((OrbitView) mWorldWindow.getView()).getOrbitViewLimits();
       if (limits != null)
       {
@@ -139,6 +139,12 @@ public class WorldWindPanel extends JPanel
          double max = mWorldWindow.getModel().getGlobe().getRadius() * 2.0;
          limits.setZoomLimits(min, max);
       }
+   }
+   
+   public void resetViewToStart()
+   {
+      mWorldWindow.getView().setEyePosition(mStartPosition);
+      mWorldWindow.redraw();
    }
 
    public GazeControlsLayer getGazeControlsLayer()
