@@ -5,9 +5,12 @@ import gov.nasa.worldwind.layers.RenderableLayer;
 import gov.nasa.worldwind.layers.ViewControlsLayer;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.ScreenImage;
+import gov.nasa.worldwind.render.Size;
 import gov.nasa.worldwind.util.WWIO;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +49,8 @@ public class GazeControlsLayer extends RenderableLayer
    private BufferedImage mCenterPanImage = null;
    private BufferedImage mZoomInImage = null;
    private BufferedImage mZoomOutImage = null;
+   
+   private double mZoomScale = 1.0;
 
    private ScreenImage mEdgePanScreenImage;
    private ScreenImage mCenterPanScreenImage;
@@ -140,6 +145,14 @@ public class GazeControlsLayer extends RenderableLayer
          mCenterPanScreenImage.setImageSource(mCenterPanImagePath);
          mCenterPanScreenImage.setValue(AVKey.VIEW_OPERATION, AVKey.VIEW_PAN);
          mCenterPanScreenImage.setOpacity(0.5);
+         
+         Size s = new Size(Size.EXPLICIT_DIMENSION, 
+                           mCenterPanImage.getWidth(), 
+                           AVKey.PIXELS, 
+                           Size.EXPLICIT_DIMENSION, 
+                           mCenterPanImage.getHeight(), 
+                           AVKey.PIXELS);
+         mCenterPanScreenImage.setSize(s);
 
          this.addRenderable(mCenterPanScreenImage);
       }
@@ -150,7 +163,15 @@ public class GazeControlsLayer extends RenderableLayer
          mZoomInScreenImage = new ScreenImage();
          mZoomInScreenImage.setImageSource(mZoomInImagePath);
          mZoomInScreenImage.setValue(AVKey.VIEW_OPERATION, AVKey.VIEW_ZOOM_IN);
-         mZoomInScreenImage.setOpacity(0.5);
+         mZoomInScreenImage.setOpacity(0.5);         
+         
+         Size s = new Size(Size.EXPLICIT_DIMENSION, 
+                           mZoomInImage.getWidth(), 
+                           AVKey.PIXELS, 
+                           Size.EXPLICIT_DIMENSION, 
+                           mZoomInImage.getHeight(), 
+                           AVKey.PIXELS);
+         mZoomInScreenImage.setSize(s);
 
          this.addRenderable(mZoomInScreenImage);
       }
@@ -162,6 +183,14 @@ public class GazeControlsLayer extends RenderableLayer
          mZoomOutScreenImage.setImageSource(mZoomOutImagePath);
          mZoomOutScreenImage.setValue(AVKey.VIEW_OPERATION, AVKey.VIEW_ZOOM_OUT);
          mZoomOutScreenImage.setOpacity(0.5);
+         
+         Size s = new Size(Size.EXPLICIT_DIMENSION, 
+                           mZoomOutImage.getWidth(), 
+                           AVKey.PIXELS, 
+                           Size.EXPLICIT_DIMENSION, 
+                           mZoomOutImage.getHeight(), 
+                           AVKey.PIXELS);
+         mZoomOutScreenImage.setSize(s);
 
          this.addRenderable(mZoomOutScreenImage);
       }
@@ -250,6 +279,45 @@ public class GazeControlsLayer extends RenderableLayer
       }
 
       referenceViewport = dc.getView().getViewport();
+   }
+   
+   public void scaleZoom(double newScale)
+   {  
+      int zoomInWidth = (int)(mZoomInImage.getWidth() * newScale);
+      int zoomInHeight = (int)(mZoomInImage.getHeight() * newScale);
+      int zoomOutWidth = (int)(mZoomOutImage.getWidth() * newScale);
+      int zoomOutHeight = (int)(mZoomOutImage.getHeight() * newScale);
+      
+      int centerPanWidth = (int)(mCenterPanImage.getWidth() * newScale);
+      int centerPanHeight = (int)(mCenterPanImage.getHeight() * newScale);
+      
+      BufferedImage zoomInImage = 
+         new BufferedImage(zoomInWidth, zoomInHeight, BufferedImage.TYPE_INT_ARGB);
+      BufferedImage zoomOutImage = 
+         new BufferedImage(zoomOutWidth, zoomOutHeight, BufferedImage.TYPE_INT_ARGB);
+      BufferedImage centerPanImage = 
+         new BufferedImage(centerPanWidth, centerPanHeight, BufferedImage.TYPE_INT_ARGB);
+      
+      AffineTransform transform = new AffineTransform();
+      transform.scale(newScale, newScale);
+      AffineTransformOp scaleOp = 
+         new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
+      
+      zoomInImage = scaleOp.filter(mZoomInImage, zoomInImage);
+      zoomOutImage = scaleOp.filter(mZoomOutImage, zoomOutImage);
+      centerPanImage = scaleOp.filter(mCenterPanImage, centerPanImage);
+      
+      mZoomInImage = zoomInImage;
+      mZoomOutImage = zoomOutImage;
+      mCenterPanImage = centerPanImage;
+      
+      mZoomScale = newScale;
+      reset();
+   }
+   
+   public double getZoomScale()
+   {
+      return mZoomScale;
    }
 
    public ScreenImage getEdgePanScreenImage()

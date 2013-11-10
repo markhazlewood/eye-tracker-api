@@ -21,12 +21,18 @@ public class ConfigTestDialog extends javax.swing.JDialog
         initComponents();
     }
     
-    public void setVisible(boolean visible, boolean showEdgePan, boolean showCenterPan, boolean showZoomIn, boolean showZoomOut)
+    public void setVisible(boolean visible, 
+                           boolean showEdgePan, 
+                           boolean showCenterPan, 
+                           boolean showZoomIn, 
+                           boolean showZoomOut,
+                           double zoomScale)
     {
        mShowCenterPanCheck.setSelected(showCenterPan);
        mShowEdgePanCheck.setSelected(showEdgePan);
        mShowZoomInCheck.setSelected(showZoomIn);
        mShowZoomOutCheck.setSelected(showZoomOut);
+       mZoomScaleSpinner.setValue(zoomScale);
        
        super.setVisible(visible);
     }
@@ -45,17 +51,13 @@ public class ConfigTestDialog extends javax.swing.JDialog
       jPanel1 = new javax.swing.JPanel();
       jButton1 = new javax.swing.JButton();
       jPanel2 = new javax.swing.JPanel();
-      jLabel1 = new javax.swing.JLabel();
       mShowZoomOutCheck = new javax.swing.JCheckBox();
       jLabel2 = new javax.swing.JLabel();
       mShowZoomInCheck = new javax.swing.JCheckBox();
-      mUiZoomModeRad = new javax.swing.JRadioButton();
-      mDwellZoomModeRad = new javax.swing.JRadioButton();
       mShowCenterPanCheck = new javax.swing.JCheckBox();
-      jLabel3 = new javax.swing.JLabel();
-      mUiPanModeRad = new javax.swing.JRadioButton();
-      mDwellPanModeRad = new javax.swing.JRadioButton();
       mShowEdgePanCheck = new javax.swing.JCheckBox();
+      jLabel4 = new javax.swing.JLabel();
+      mZoomScaleSpinner = new javax.swing.JSpinner();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -75,14 +77,6 @@ public class ConfigTestDialog extends javax.swing.JDialog
 
       jPanel2.setLayout(new java.awt.GridBagLayout());
 
-      jLabel1.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
-      jLabel1.setText("Zoom Mode:");
-      gridBagConstraints = new java.awt.GridBagConstraints();
-      gridBagConstraints.gridx = 0;
-      gridBagConstraints.gridy = 2;
-      gridBagConstraints.ipady = 15;
-      jPanel2.add(jLabel1, gridBagConstraints);
-
       mShowZoomOutCheck.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
       mShowZoomOutCheck.setSelected(true);
       mShowZoomOutCheck.setText("Zoom Out");
@@ -92,7 +86,8 @@ public class ConfigTestDialog extends javax.swing.JDialog
       jPanel2.add(mShowZoomOutCheck, gridBagConstraints);
 
       jLabel2.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
-      jLabel2.setText("Show:");
+      jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+      jLabel2.setText("Show:            ");
       gridBagConstraints = new java.awt.GridBagConstraints();
       gridBagConstraints.gridx = 0;
       gridBagConstraints.gridy = 0;
@@ -107,21 +102,6 @@ public class ConfigTestDialog extends javax.swing.JDialog
       gridBagConstraints.gridy = 0;
       jPanel2.add(mShowZoomInCheck, gridBagConstraints);
 
-      mUiZoomModeRad.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      mUiZoomModeRad.setSelected(true);
-      mUiZoomModeRad.setText("Gaze UI");
-      gridBagConstraints = new java.awt.GridBagConstraints();
-      gridBagConstraints.gridx = 1;
-      gridBagConstraints.gridy = 2;
-      jPanel2.add(mUiZoomModeRad, gridBagConstraints);
-
-      mDwellZoomModeRad.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      mDwellZoomModeRad.setText("Gaze Dwell");
-      gridBagConstraints = new java.awt.GridBagConstraints();
-      gridBagConstraints.gridx = 2;
-      gridBagConstraints.gridy = 2;
-      jPanel2.add(mDwellZoomModeRad, gridBagConstraints);
-
       mShowCenterPanCheck.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
       mShowCenterPanCheck.setSelected(true);
       mShowCenterPanCheck.setText("Center Pan");
@@ -129,29 +109,6 @@ public class ConfigTestDialog extends javax.swing.JDialog
       gridBagConstraints.gridx = 4;
       gridBagConstraints.gridy = 0;
       jPanel2.add(mShowCenterPanCheck, gridBagConstraints);
-
-      jLabel3.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
-      jLabel3.setText("Pan Mode:");
-      gridBagConstraints = new java.awt.GridBagConstraints();
-      gridBagConstraints.gridx = 0;
-      gridBagConstraints.gridy = 1;
-      gridBagConstraints.ipady = 15;
-      jPanel2.add(jLabel3, gridBagConstraints);
-
-      mUiPanModeRad.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      mUiPanModeRad.setSelected(true);
-      mUiPanModeRad.setText("Gaze UI");
-      gridBagConstraints = new java.awt.GridBagConstraints();
-      gridBagConstraints.gridx = 1;
-      gridBagConstraints.gridy = 1;
-      jPanel2.add(mUiPanModeRad, gridBagConstraints);
-
-      mDwellPanModeRad.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      mDwellPanModeRad.setText("Gaze Dwell");
-      gridBagConstraints = new java.awt.GridBagConstraints();
-      gridBagConstraints.gridx = 2;
-      gridBagConstraints.gridy = 1;
-      jPanel2.add(mDwellPanModeRad, gridBagConstraints);
 
       mShowEdgePanCheck.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
       mShowEdgePanCheck.setText("Edge Pan");
@@ -166,6 +123,21 @@ public class ConfigTestDialog extends javax.swing.JDialog
       gridBagConstraints.gridx = 3;
       gridBagConstraints.gridy = 0;
       jPanel2.add(mShowEdgePanCheck, gridBagConstraints);
+
+      jLabel4.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
+      jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+      jLabel4.setText("Zoom Scale: ");
+      gridBagConstraints = new java.awt.GridBagConstraints();
+      gridBagConstraints.gridx = 0;
+      gridBagConstraints.gridy = 1;
+      jPanel2.add(jLabel4, gridBagConstraints);
+
+      mZoomScaleSpinner.setModel(new javax.swing.SpinnerNumberModel(1.0d, 0.1d, 2.0d, 0.1d));
+      mZoomScaleSpinner.setPreferredSize(new java.awt.Dimension(75, 30));
+      gridBagConstraints = new java.awt.GridBagConstraints();
+      gridBagConstraints.gridx = 1;
+      gridBagConstraints.gridy = 1;
+      jPanel2.add(mZoomScaleSpinner, gridBagConstraints);
 
       getContentPane().add(jPanel2, java.awt.BorderLayout.CENTER);
 
@@ -248,30 +220,21 @@ public class ConfigTestDialog extends javax.swing.JDialog
         return mShowCenterPanCheck.isSelected();
     }
     
-    public boolean getPanUiMode()
+    public double getZoomScale()
     {
-        return mUiPanModeRad.isSelected();
-    }
-    
-    public boolean getZoomUiMode()
-    {
-        return mUiZoomModeRad.isSelected();
+       return Double.parseDouble(mZoomScaleSpinner.getValue().toString());
     }
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton jButton1;
-   private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
-   private javax.swing.JLabel jLabel3;
+   private javax.swing.JLabel jLabel4;
    private javax.swing.JPanel jPanel1;
    private javax.swing.JPanel jPanel2;
-   private javax.swing.JRadioButton mDwellPanModeRad;
-   private javax.swing.JRadioButton mDwellZoomModeRad;
    private javax.swing.JCheckBox mShowCenterPanCheck;
    private javax.swing.JCheckBox mShowEdgePanCheck;
    private javax.swing.JCheckBox mShowZoomInCheck;
    private javax.swing.JCheckBox mShowZoomOutCheck;
-   private javax.swing.JRadioButton mUiPanModeRad;
-   private javax.swing.JRadioButton mUiZoomModeRad;
+   private javax.swing.JSpinner mZoomScaleSpinner;
    // End of variables declaration//GEN-END:variables
 }
