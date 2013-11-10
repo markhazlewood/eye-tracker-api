@@ -69,6 +69,9 @@ public class MainFrame extends JFrame
     private JButton mStartTaskButton;
     private JButton mEndTaskButton;
     private JButton mNextTaskButton;
+    
+    private JPanel mControlPanel;
+    private boolean mShowControlPanel = true;
 
     /**
      * Creates new form MainFrame
@@ -103,7 +106,7 @@ public class MainFrame extends JFrame
     }
 
     private void initializeUI()
-    {   
+    {
         mMainViewPanel = new WorldWindPanel(mCanvasSize);
 
         mConfigTestDialog = new ConfigTestDialog(this, true);
@@ -121,15 +124,15 @@ public class MainFrame extends JFrame
         JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
         separator.setPreferredSize(new Dimension(10, 20));
 
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        topPanel.add(mStartSimulationButton);
-        topPanel.add(mConfigureTestButton);
-        topPanel.add(mNewParticipantButton);
-        topPanel.add(separator);
-        topPanel.add(mStartTaskButton);
-        topPanel.add(mEndTaskButton);
-        topPanel.add(mNextTaskButton);
-        getContentPane().add(topPanel, BorderLayout.NORTH);
+        mControlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        mControlPanel.add(mStartSimulationButton);
+        mControlPanel.add(mConfigureTestButton);
+        mControlPanel.add(mNewParticipantButton);
+        mControlPanel.add(separator);
+        mControlPanel.add(mStartTaskButton);
+        mControlPanel.add(mEndTaskButton);
+        mControlPanel.add(mNextTaskButton);
+        getContentPane().add(mControlPanel, BorderLayout.NORTH);
 
         mStartSimulationButton.addActionListener((ActionEvent ae) ->
         {
@@ -142,12 +145,14 @@ public class MainFrame extends JFrame
                     mMainViewPanel.getGazeControlsLayer().getShowEdgePan(),
                     mMainViewPanel.getGazeControlsLayer().getShowCenterPan(),
                     mMainViewPanel.getGazeControlsLayer().getShowZoomIn(),
-                    mMainViewPanel.getGazeControlsLayer().getShowZoomOut());
+                    mMainViewPanel.getGazeControlsLayer().getShowZoomOut(),
+                    mMainViewPanel.getGazeControlsLayer().getZoomScale());
 
             mMainViewPanel.getGazeControlsLayer().setShowZoomInZoomOutPan(mConfigTestDialog.getShowZoomIn(),
                     mConfigTestDialog.getShowZoomOut(),
                     mConfigTestDialog.getShowEdgePan(),
                     mConfigTestDialog.getShowCenterPan());
+            mMainViewPanel.getGazeControlsLayer().scaleZoom(mConfigTestDialog.getZoomScale());
         });
 
         mNewParticipantButton.addActionListener((ActionEvent e) ->
@@ -210,11 +215,29 @@ public class MainFrame extends JFrame
 
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        this.pack();
+        pack();
 
         // Center the application on the screen.
         WWUtil.alignComponent(null, this, AVKey.CENTER);
         this.setResizable(true);
+    }
+    
+    private void toggleControlPanel()
+    {
+       if (mShowControlPanel)
+       {
+          getContentPane().remove(mControlPanel);
+          mShowControlPanel = false;
+          pack();
+          setExtendedState(JFrame.MAXIMIZED_BOTH);
+       }
+       else
+       {
+          getContentPane().add(mControlPanel, BorderLayout.NORTH);
+          mShowControlPanel = true;
+          pack();
+          setExtendedState(JFrame.MAXIMIZED_BOTH);
+       }
     }
 
     private void toggleListeningToTracker()
@@ -247,7 +270,7 @@ public class MainFrame extends JFrame
 
             else if (e.getKeyCode() == KeyEvent.VK_C || e.getKeyChar() == 'c')
             {
-                toggleListeningToTracker();
+                toggleControlPanel();
             }
         }
 
