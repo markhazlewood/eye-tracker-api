@@ -72,7 +72,8 @@ public class SlidingWindowAverageFilter extends Filter
       mCurrentAverageY = (double)mCurrentTotalY / (double)mCurrentWindowSize;
       
       // Set the point and notify listeners
-      mLastFilteredCoordinate = new Point((int)mCurrentAverageX, (int)mCurrentAverageY);
+      mLastFilteredCoordinate = new Point((int)mCurrentAverageX, (int)mCurrentAverageY);      
+      
       mNewCoordinateAvailable = true;
       notifyAll();
       
@@ -100,4 +101,77 @@ public class SlidingWindowAverageFilter extends Filter
    }
 
    // </editor-fold>
+   
+    public static void main(String[] args)
+    {
+        SlidingWindowAverageFilter testFilter = new SlidingWindowAverageFilter(10);
+        
+        Point[] testPoints =    {  
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(5, 5),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                    new Point(3, 3),
+                                };
+        
+        for (Point point : testPoints)
+        {
+            testFilter.filter(point.x, point.y);
+        }
+    }
 }
