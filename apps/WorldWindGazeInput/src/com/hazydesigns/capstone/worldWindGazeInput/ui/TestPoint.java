@@ -30,8 +30,8 @@ public class TestPoint
 {
    // <editor-fold defaultstate="expanded" desc="Private Members">
    
-   public final static double SHOW_SUBPOINT_ELEVATION = 10000.0;
-   public final static double SHOW_SUBPOINT_DISTANCE = 20000.0;
+   public final static double SHOW_SUBPOINT_ELEVATION = 20000.0;
+   public final static double SHOW_SUBPOINT_DISTANCE = 200000.0;
    public final static double ACTIVATE_SUBPOINT_DISTANCE = 20000.0;
 
    private final GlobeAnnotation mMainPoint;

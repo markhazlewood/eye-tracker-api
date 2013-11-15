@@ -31,8 +31,8 @@ public class GazeControlsSelectListener implements SelectListener
 
     protected static final int DEFAULT_TIMER_DELAY = 50;
     protected static final int GAZE_ACTIVATION_DELAY = 1000;
-    protected final double PAN_STEP = 0.1;
-    protected final double ZOOM_STEP = 0.4;
+    protected final double PAN_STEP = 0.2;
+    protected final double ZOOM_STEP = 0.6;
 
     protected WorldWindow wwd;
     protected GazeControlsLayer controlsLayer;
@@ -338,7 +338,7 @@ public class GazeControlsSelectListener implements SelectListener
                 {
                    // Go some distance in the control mouse direction
                   Angle heading = computePanHeading(view, controlsLayer.getCenterPanScreenImage());
-                  Angle distance = computePanAmount(this.wwd.getModel().getGlobe(), view, controlsLayer.getCenterPanScreenImage(), PAN_STEP);
+                  Angle distance = computePanAmount(this.wwd.getModel().getGlobe(), view, controlsLayer.getCenterPanScreenImage(), PAN_STEP/2.0);
                   LatLon newViewCenter = LatLon.greatCircleEndPosition(view.getCenterPosition(),
                           heading, distance);
 

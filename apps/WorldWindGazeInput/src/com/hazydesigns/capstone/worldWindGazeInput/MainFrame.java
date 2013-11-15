@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -27,7 +28,9 @@ import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 import rit.eyeTrackingAPI.DataConstructs.GazePoint;
 import rit.eyeTrackingAPI.EyeTrackerUtilities.eyeTrackerClients.IViewXClient;
+import rit.eyeTrackingAPI.SmoothingFilters.Filter;
 import rit.eyeTrackingAPI.SmoothingFilters.PassthroughFilter;
+import rit.eyeTrackingAPI.SmoothingFilters.SlidingWindowAverageFilter;
 
 /**
  *
@@ -40,7 +43,7 @@ public class MainFrame extends JFrame
 
     // Eye tracker connection stuff
     private final GazePoint mGazePoint;
-    private final PassthroughFilter mSmoothingFilter;
+    private final Filter mSmoothingFilter;
     //private EyeTrackerClientSimulator mEyeTrackerClient;
     private IViewXClient mEyeTrackerClient;
     private final EyeTrackerListener mEyeTrackerListener;
@@ -51,7 +54,7 @@ public class MainFrame extends JFrame
     private ConfigTestDialog mConfigTestDialog;
 
     private final MyKeyListener mKeyListener = new MyKeyListener();
-    private boolean mListeningToTracker = false;
+    private boolean mListeningToTracker = true;
 
     private static final String TEST_FILE_PATH = System.getProperty("java.io.tmpdir") + "\\simulatedEyeData.txt";
     private boolean mFullscreen = false;
@@ -59,7 +62,7 @@ public class MainFrame extends JFrame
     private JButton mNewParticipantButton;
     private NewParticipantDialog mNewParticipantDialog;
     private int mCurrentParticipantNumber = 0;
-    private String mParticipantRecordPath = "";
+    private String mParticipantRecordPath = "C:\\Documents and Settings\\iView X\\Desktop\\Hazlewood_capstone\\Results\\";
 
     private boolean mTaskRunning = false;
     private long mStartTaskTime = 0;
@@ -78,7 +81,8 @@ public class MainFrame extends JFrame
      */
     public MainFrame()
     {
-        mSmoothingFilter = new PassthroughFilter();
+        //mSmoothingFilter = new PassthroughFilter();
+        mSmoothingFilter = new SlidingWindowAverageFilter(20);
         mGazePoint = new GazePoint(mSmoothingFilter);
 
         mEyeTrackerListener = new EyeTrackerListener(mSmoothingFilter, null, false, 0);
@@ -89,8 +93,9 @@ public class MainFrame extends JFrame
      */
     private void initialize()
     {
-        //initializeTracker();
+        initializeTracker();
         initializeUI();
+        toggleListeningToTracker();
     }
 
     private void initializeTracker()
@@ -107,6 +112,7 @@ public class MainFrame extends JFrame
 
     private void initializeUI()
     {
+        setUndecorated(true);
         mMainViewPanel = new WorldWindPanel(mCanvasSize);
 
         mConfigTestDialog = new ConfigTestDialog(this, true);
@@ -227,16 +233,22 @@ public class MainFrame extends JFrame
        if (mShowControlPanel)
        {
           getContentPane().remove(mControlPanel);
+          getContentPane().remove(mMainViewPanel);
+          getContentPane().add(mMainViewPanel, BorderLayout.CENTER);
           mShowControlPanel = false;
           pack();
           setExtendedState(JFrame.MAXIMIZED_BOTH);
+          mMainViewPanel.redrawView();
        }
        else
        {
+          getContentPane().remove(mMainViewPanel);
           getContentPane().add(mControlPanel, BorderLayout.NORTH);
+          getContentPane().add(mMainViewPanel, BorderLayout.CENTER);
           mShowControlPanel = true;
           pack();
           setExtendedState(JFrame.MAXIMIZED_BOTH);
+          mMainViewPanel.redrawView();
        }
     }
 
@@ -272,6 +284,11 @@ public class MainFrame extends JFrame
             {
                 toggleControlPanel();
             }
+            
+            else if (e.getKeyCode() == KeyEvent.VK_D || e.getKeyChar() == 'd')
+            {
+                toggleListeningToTracker();
+            }
         }
 
         @Override
@@ -291,11 +308,13 @@ public class MainFrame extends JFrame
         if (!mFullscreen)
         {
             GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(this);
+            mMainViewPanel.redrawView();
             mFullscreen = true;
         }
         else
         {
             GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().setFullScreenWindow(null);
+            mMainViewPanel.redrawView();
             mFullscreen = false;
         }
     }
@@ -325,7 +344,11 @@ public class MainFrame extends JFrame
             if (Files.exists(path.getParent()))
             {
                 // "try-with-resources" a.k.a. "using"
-                try (BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) 
+                try (BufferedWriter writer = Files.newBufferedWriter(path, 
+                                                                     StandardCharsets.UTF_8, 
+                                                                     StandardOpenOption.CREATE, 
+                                                                     StandardOpenOption.WRITE, 
+                                                                     StandardOpenOption.APPEND)) 
                 {
                     writer.write(line);
                     writer.newLine();
