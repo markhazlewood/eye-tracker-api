@@ -12,7 +12,6 @@ import gov.nasa.worldwind.event.PositionEvent;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.RenderableLayer;
-import gov.nasa.worldwind.layers.TiledImageLayer;
 import gov.nasa.worldwind.render.AnnotationAttributes;
 import gov.nasa.worldwind.render.ScreenAnnotation;
 import gov.nasa.worldwind.view.orbit.OrbitView;
@@ -49,14 +48,13 @@ public class WorldWindPanel extends JPanel
 
    private final Position[] mTestLocations =
    {
-      Position.fromDegrees(31.821363, -162.363187),      // Middle of Pacific, practice point
+      Position.fromDegrees(31.821363, -162.363187),      // Practice point, roughly equi-distant from others
       Position.fromDegrees(51.511157, -0.119940),        // London
       Position.fromDegrees(35.693862, 139.691966),       // Tokyo
       Position.fromDegrees(-15.778414, -47.961173),      // Brasilia
-      Position.fromDegrees(20.769674, -156.409737),      // Hawaii
       Position.fromDegrees(40.716132, -74.012076)        // NYC
    };
-   private final Position mStartPosition = Position.fromDegrees(19.066909, -40.189909, 1.2756274E7);
+   private final Position mStartPosition = Position.fromDegrees(12.655987, 43.257013, 1.2756274E7);
    private ArrayList<TestPoint> mTestPoints = new ArrayList<>();
 
    /**
@@ -212,7 +210,7 @@ public class WorldWindPanel extends JPanel
    {
       RenderableLayer locationLayer = new RenderableLayer();
       
-      String[] pointLabels = { "Z", "A", "B", "C", "D", "E" };
+      String[] pointLabels = { "Z", "A", "B", "C", "D" };
 
       for (int i = 0; i < mTestLocations.length; i++)
       {
@@ -255,5 +253,10 @@ public class WorldWindPanel extends JPanel
          });
       });
       cameraCheckTimer.start();
+   }
+   
+   public void redrawView()
+   {
+       mWorldWindow.redraw();
    }
 }

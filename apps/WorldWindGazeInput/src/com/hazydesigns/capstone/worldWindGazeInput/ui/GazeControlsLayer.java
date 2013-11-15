@@ -50,7 +50,7 @@ public class GazeControlsLayer extends RenderableLayer
    private BufferedImage mZoomInImage = null;
    private BufferedImage mZoomOutImage = null;
    
-   private double mZoomScale = 1.0;
+   private double mZoomScale = 0.8;
 
    private ScreenImage mEdgePanScreenImage;
    private ScreenImage mCenterPanScreenImage;
@@ -85,6 +85,7 @@ public class GazeControlsLayer extends RenderableLayer
          mZoomOutImage
                  = ImageIO.read((InputStream) WWIO.getFileOrResourceAsStream(mZoomOutImagePath,
                                  this.getClass()));
+          scaleZoom(mZoomScale);
       }
       catch (IOException ex)
       {

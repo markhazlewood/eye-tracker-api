@@ -32,6 +32,7 @@ public class NewParticipantDialog extends javax.swing.JDialog
    public void show(String startingRecordDirectory, int participantNumber, int taskNumber)
    {
       mRecordDirectory = startingRecordDirectory;
+      mPathField.setText(mRecordDirectory);
       
       mParticipantNumber = participantNumber;
       mPartNumSpinner.setValue(mParticipantNumber);
