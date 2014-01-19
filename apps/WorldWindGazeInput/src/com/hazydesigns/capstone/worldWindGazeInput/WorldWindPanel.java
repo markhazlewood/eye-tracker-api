@@ -2,6 +2,7 @@ package com.hazydesigns.capstone.worldWindGazeInput;
 
 import com.hazydesigns.capstone.worldWindGazeInput.ui.GazeControlsLayer;
 import com.hazydesigns.capstone.worldWindGazeInput.ui.GazeControlsSelectListener;
+import com.hazydesigns.capstone.worldWindGazeInput.ui.ManeuverRecommendationLayer;
 import com.hazydesigns.capstone.worldWindGazeInput.ui.TestPoint;
 import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.WorldWind;
@@ -111,7 +112,9 @@ public class WorldWindPanel extends JPanel
       mGazeControlsLayer.setName("GazeControlLayer");
       GazeControlsSelectListener controlSelectListener = new GazeControlsSelectListener(mWorldWindow, mGazeControlsLayer, mCursorImage);
       mWorldWindow.addSelectListener(controlSelectListener);
-      mWorldWindow.getModel().getLayers().add(mGazeControlsLayer);
+      //mWorldWindow.getModel().getLayers().add(mGazeControlsLayer);
+      
+      mWorldWindow.getModel().getLayers().add(new ManeuverRecommendationLayer());
 
       mWorldWindow.getModel().getLayers().add(cursorLayer);
       
