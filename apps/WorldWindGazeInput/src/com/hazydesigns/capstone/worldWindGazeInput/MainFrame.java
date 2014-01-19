@@ -93,9 +93,9 @@ public class MainFrame extends JFrame
      */
     private void initialize()
     {
-        initializeTracker();
+        //initializeTracker();
         initializeUI();
-        toggleListeningToTracker();
+        //toggleListeningToTracker();
     }
 
     private void initializeTracker()
